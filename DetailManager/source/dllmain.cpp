@@ -588,7 +588,7 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                 {
                     beaconTM.Type = 18; //18番に変更
                     int TrainType = beacon_data.Optional / 100000000;
-                    int TrainTypeS = TrainType == 1 ? 14 : TrainType == 2 ? 11 : TrainType == 3 ? 2 : TrainType == 4 ? 6 : 0;
+                    int TrainTypeS = TrainType == 1 ? 14 : TrainType == 2 ? 11 : TrainType == 3 ? 2 : TrainType == 4 ? 6 :TrainType == 5 ? 9 : TrainType == 6 ? 5 : 0;
                     int Pattern = (beacon_data.Optional / 1000000) % 100;
                     int Destination = (beacon_data.Optional / 10000) % 100;
                     beaconTM.Optional = TrainTypeS * 10000 + Destination * 100 + g_OpeNum;
@@ -597,14 +597,50 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                 {
                     g_OpeNum = beacon_data.Optional % 100;
                 }
-                else if (beacon_data.Type == 1)//1番地上子
+                else if (beacon_data.Type == 1)//1番地上子（合図ブザー）
                 {
                     beaconTM.Type = 33;
                     beaconTM.Optional = (beacon_data.Optional / 1000) % 10;
                 }
-                else if (beacon_data.Type == 22)//22番地上子
+                else if (beacon_data.Type == 22)//22番地上子（P2）
                 {
                     beaconTM.Type = 297; //実質的な無効化
+                }
+                else if (beacon_data.Type == 26)//26番地上子
+                {
+                    beaconTM.Type = 1;//P2
+                    beaconTM.Signal = beacon_data.Signal;
+                    beaconTM.Distance = beacon_data.Distance;
+                    beaconTM.Optional = beacon_data.Optional;
+                }
+                else if (beacon_data.Type == 27)
+                {
+                    beaconTM.Type = 2;//P3
+                    beaconTM.Signal = beacon_data.Signal;
+                    beaconTM.Distance = beacon_data.Distance;
+                    beaconTM.Optional = beacon_data.Optional;
+                }
+                else if (beacon_data.Type == 29)
+                {
+                    beaconTM.Type = 4;//P2絶対
+                    beaconTM.Signal = beacon_data.Signal;
+                    beaconTM.Distance = beacon_data.Distance;
+                    beaconTM.Optional = beacon_data.Optional;
+                }
+                else if (beacon_data.Type == 30)
+                {
+                    beaconTM.Type = 5;//P1絶対
+                    beaconTM.Signal = beacon_data.Signal;
+                    beaconTM.Distance = beacon_data.Distance;
+                    beaconTM.Optional = beacon_data.Optional;
+                }
+                else if (beacon_data.Type == 4 && traB.Eats != 0)
+                {
+                    beaconTM.Type = 298;
+                }
+                else if (beacon_data.Type == 5 && traB.Eats != 0)
+                {
+                    beaconTM.Type = 299;
                 }
                 else
                 {

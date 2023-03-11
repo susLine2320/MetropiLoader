@@ -161,7 +161,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\dllmain.cpp" />
-    <ClCompile Include="source\TranslateB.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

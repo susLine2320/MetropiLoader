@@ -91,6 +91,7 @@ public:
 	int direction;
 	int direction89;
 	int Ekey;
+	int Eats; //ATS種類変更
 
 	// Ats.cpp : DLL アプリケーション用のエントリ ポイントを定義します。
 //
@@ -100,6 +101,7 @@ public:
 	{
 		p234 = stnum;
 		direction89 = 2;
+		Eats = 1;
 	}
 
 	void Elapse(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
@@ -124,8 +126,8 @@ public:
 		p4 = panel[4];
 		p19 = panel[19];
 		p20 = panel[20];
-		//p36 = panel[36];
-		//p37 = panel[37];
+		p36 = panel[36];
+		p37 = panel[37];
 		//p38 = panel[38];
 		//p39 = panel[39];
 		p94 = panel[94];
@@ -144,12 +146,18 @@ public:
 		//oerNotch = sound[239];
 
 
-		if (p92 == 7 && p72 == 0 && panel[101] == 0)//小田急キー、CgSがATSの時で、ATC無信号時
+		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
 		{
 			
 			outputBrake = oerBrake; //小田急PIからの出力Bを使用
 			outputNotch = oerNotch; //小田急PIからの出力Pを使用
 			sound[0] = ATS_SOUND_STOP; //ATSベルをストップ
+		}
+		else if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 0)//OM-ATS
+		{
+			outputBrake = tmBrake; //うさプラからの出力Bを使用
+			outputNotch = tmNotch; //うさプラからの出力Pを使用
+			//ATSベルは有効
 		}
 		else
 		{
@@ -220,6 +228,20 @@ public:
 		else {
 			p136 = 0;
 		}
+		//2303追加
+		if (p92 == 7 && p36 == 1) {//OM-ATS
+			p36 = 1;
+		}
+		else {
+			p36 = 0;
+		}
+		if (Eats == 0 && p37 == 1) {//動作
+			p37 = 1;
+		}
+		else {
+			p37 = 0;
+		}
+		//終了
 		if (p4 == 1 || p39 == 1) {//フルステップ　4/39片方成立時に点灯させる
 			panel[39] = 1;
 		}
@@ -671,6 +693,9 @@ public:
 		}
 		if (beaconData.Type == 19 && direction89 == 2) {//運転方向を取得（バックアップ）
 			direction = beaconData.Optional % 2;
+		}
+		if (beaconData.Type == 100) {
+			Eats = beaconData.Optional % 10; //ATS種類を取得
 		}
 	}
 
