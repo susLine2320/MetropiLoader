@@ -317,7 +317,7 @@ public:
 		s55 = sound[4];
 		s67 = sound[7];
 		s68 = sound[8];
-		s89 = sound[5];
+		//s89 = sound[5];
 
 		// サウンド出力（変換）
 		sound[21] = s21;
@@ -328,7 +328,7 @@ public:
 		sound[55] = s55;
 		sound[67] = s67;
 		sound[68] = s68;
-		sound[89] = s89;
+		//sound[89] = s89;
 
 		//sound[238] = g_brakeNotch; //TranslateBに値を転送する
 		//sound[239] = g_powerNotch; //TranslateBに値を転送する

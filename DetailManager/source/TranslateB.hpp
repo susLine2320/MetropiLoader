@@ -157,6 +157,7 @@ public:
 		{
 			outputBrake = tmBrake; //うさプラからの出力Bを使用
 			outputNotch = tmNotch; //うさプラからの出力Pを使用
+			sound[21] = ATS_SOUND_STOP;
 			//ATSベルは有効
 		}
 		else

@@ -259,8 +259,8 @@ void WINAPI atsInitialize(int param)
 // Called every frame
 ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
 {
-    ATS_HANDLES ret;
-    ATS_HANDLES retOER; //小田急PI
+    ATS_HANDLES ret{};
+    ATS_HANDLES retOER{}; //小田急PI
     ATS_HANDLES retTM; //メトロPI
     
     g_deltaT = vs.Time - g_time;
@@ -272,6 +272,10 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
 
     if (g_num_of_detailmodules> 0)//プラグインの読み込み有無
     {
+        retOER.Power = g_handles[0].Power; //運転士のノッチ段数
+        retOER.Brake = g_handles[0].Brake; //運転士のブレーキ段数
+        retOER.Reverser = g_handles[0].Reverser; //運転士のレバーサ位置
+
         if (g_first_time)//初回の場合　ブレーキセット
         {
             for (int i = 0; i < g_num_of_detailmodules; ++i)
@@ -574,7 +578,8 @@ void WINAPI atsSetSignal(int signal)
 void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
 {
     traB.SetBeaconData(beacon_data);
-    ATS_BEACONDATA beaconTM;
+    ATS_BEACONDATA beaconTM{};
+    ATS_BEACONDATA beaconOER{};
 
     for (int i = 0; i < g_num_of_detailmodules; ++i)
     {
@@ -584,28 +589,30 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
             if (i == 1)//うさプラに対して
             {
                 //int OpeNum;
-                if (beacon_data.Type == 2)//2番地上子
+                if (beacon_data.Type == 2 && beacon_data.Optional != 0)//2番地上子
                 {
                     beaconTM.Type = 18; //18番に変更
-                    int TrainType = beacon_data.Optional / 100000000;
+                    int TrainType = beacon_data.Optional == -1 ? 0 : beacon_data.Optional / 100000000;//-1の際は無効にする。以下同様
                     int TrainTypeS = TrainType == 1 ? 14 : TrainType == 2 ? 11 : TrainType == 3 ? 2 : TrainType == 4 ? 6 :TrainType == 5 ? 9 : TrainType == 6 ? 5 : 0;
-                    int Pattern = (beacon_data.Optional / 1000000) % 100;
-                    int Destination = (beacon_data.Optional / 10000) % 100;
+                    int Pattern = beacon_data.Optional == -1 ? 0 : (beacon_data.Optional / 1000000) % 100;
+                    int Destination = beacon_data.Optional == -1 ? 0 : (beacon_data.Optional / 10000) % 100;
                     beaconTM.Optional = TrainTypeS * 10000 + Destination * 100 + g_OpeNum;
                 }
-                else if (beacon_data.Type == 18)
+                else if (beacon_data.Type == 18)//18番地上子（運番）
                 {
                     g_OpeNum = beacon_data.Optional % 100;
+                    beaconTM = beacon_data;
                 }
-                else if (beacon_data.Type == 1)//1番地上子（合図ブザー）
+                else if (beacon_data.Type == 1 && beacon_data.Optional != 0)//1番地上子（合図ブザー）
                 {
                     beaconTM.Type = 33;
-                    beaconTM.Optional = (beacon_data.Optional / 1000) % 10;
+                    beaconTM.Optional = beacon_data.Optional % 10000 == 0 ? 99 : beacon_data.Optional % 10000 <= 9500 ? 9 : ((beacon_data.Optional + 500) / 1000) % 10;//0000は不鳴動、9500以上は9s、他は四捨五入で処理
                 }
                 else if (beacon_data.Type == 22)//22番地上子（P2）
                 {
                     beaconTM.Type = 297; //実質的な無効化
                 }
+                /*
                 else if (beacon_data.Type == 26)//26番地上子
                 {
                     beaconTM.Type = 1;//P2
@@ -634,19 +641,53 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                     beaconTM.Distance = beacon_data.Distance;
                     beaconTM.Optional = beacon_data.Optional;
                 }
-                else if (beacon_data.Type == 4 && traB.Eats != 0)
+                */
+                else if (beacon_data.Type == 4 && traB.Eats != 0)//4番地上子 OM以外の際は無効
                 {
                     beaconTM.Type = 298;
                 }
-                else if (beacon_data.Type == 5 && traB.Eats != 0)
+                else if (beacon_data.Type == 5 && traB.Eats != 0)//5番地上子 OM以外の際は無効
                 {
                     beaconTM.Type = 299;
+                }
+                else if (beacon_data.Type == 41 && traB.Eats == 0)//41番地上子 OMの際は無効
+                {
+                    beaconTM.Type = 301;
+                }
+                else if (beacon_data.Type == 54)
+                {
+                    beaconTM.Type = 41;
+                    beaconTM.Optional = 1;
                 }
                 else
                 {
                     beaconTM = beacon_data;
                 }
                 g_detailmodules[i].atsSetBeaconData(beaconTM);
+            }
+            else if (i == 0)//小田急PIに対して
+            {
+                if (beacon_data.Type == 1 && beacon_data.Optional == 0)
+                {
+                    beaconOER.Type == 296; //実質的な無効化
+                }
+                else if (beacon_data.Type == 2 && beacon_data.Optional == 0)
+                {
+                    beaconOER.Type == 297; //実質的な無効化
+                }
+                else if (beacon_data.Type == 4 && traB.Eats == 0)//4番地上子、OMの時は無効
+                {
+                    beaconOER.Type == 299;
+                }
+                else if (beacon_data.Type == 5 && traB.Eats == 0)//5番地上子、OMの時は無効
+                {
+                    beaconOER.Type == 300;
+                }
+                else
+                {
+                    beaconOER = beacon_data;
+                }
+                g_detailmodules[i].atsSetBeaconData(beaconOER);
             }
             else
             {
