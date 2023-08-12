@@ -650,7 +650,7 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                 {
                     beaconTM.Type = 299;
                 }
-                else if (beacon_data.Type == 41 && traB.Eats == 0)//41番地上子 OMの際は無効
+                else if (beacon_data.Type == 41 && beacon_data.Optional == 0 && traB.Eats == 0)//41番地上子 OMの際は無効
                 {
                     beaconTM.Type = 301;
                 }
@@ -677,11 +677,15 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                 }
                 else if (beacon_data.Type == 4 && traB.Eats == 0)//4番地上子、OMの時は無効
                 {
-                    beaconOER.Type == 299;
+                    beaconOER.Type == 299; //実質的な無効化
                 }
                 else if (beacon_data.Type == 5 && traB.Eats == 0)//5番地上子、OMの時は無効
                 {
-                    beaconOER.Type == 300;
+                    beaconOER.Type == 300; //実質的な無効化
+                }
+                else if (beacon_data.Type == 41 && beacon_data.Optional != 0)//41番地上子、0以外は無効（合図ブザー)
+                {
+                    beaconOER.Type == 301; //実質的な無効化
                 }
                 else
                 {
