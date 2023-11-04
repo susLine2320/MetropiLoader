@@ -1,25 +1,3 @@
-#pragma once
-
-// 以下の ifdef ブロックは DLL から簡単にエクスポートさせるマクロを作成する標準的な方法です。 
-// この DLL 内のすべてのファイルはコマンドラインで定義された ATS_EXPORTS シンボル
-// でコンパイルされます。このシンボルはこの DLL が使用するどのプロジェクト上でも未定義でなけ
-// ればなりません。この方法ではソースファイルにこのファイルを含むすべてのプロジェクトが DLL 
-// からインポートされたものとして ATS_API 関数を参照し、そのためこの DLL はこのマク 
-// ロで定義されたシンボルをエクスポートされたものとして参照します。
-//#pragma data_seg(".shared")
-//#pragma data_seg()
-
-#define ATS_BEACON_S 0 // Sロング
-#define ATS_BEACON_SN 1 // SN直下
-#define ATS_BEACON_SNRED 2 // SN誤出発防止
-#define ATS_BEACON_P 3 // P停止信号
-#define ATS_BEACON_EMG 4 // P即停(非常)
-#define ATS_BEACON_SVC 5 // P即停(常用)
-#define ATS_BEACON_SPDLIM 6 // P分岐器速度制限
-#define ATS_BEACON_SPDMAX 7 // P最高速度
-#define ATS_BEACON_SPP 8 // 停車駅通過防止装置
-
-
 int g_emgBrake; // 非常ノッチ
 int g_svcBrake; // 常用最大ノッチ
 int g_brakeNotch; // ブレーキノッチ
@@ -93,15 +71,17 @@ public:
 	int Ekey;
 	int Eats; //ATS種類変更
 
-	// Ats.cpp : DLL アプリケーション用のエントリ ポイントを定義します。
-//
-
-
-	void Initialize(void)
+	//1回しか呼ばれない
+	void setVehicleSpec()
 	{
-		p234 = stnum;
 		direction89 = 2;
 		Eats = 1;
+	}
+
+	//駅ジャンプの度に呼ばれる
+	void Initialize()
+	{
+		p234 = stnum;
 	}
 
 	void Elapse(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
@@ -148,7 +128,6 @@ public:
 
 		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
 		{
-			
 			outputBrake = oerBrake; //小田急PIからの出力Bを使用
 			outputNotch = oerNotch; //小田急PIからの出力Pを使用
 			sound[0] = ATS_SOUND_STOP; //ATSベルをストップ
@@ -546,7 +525,7 @@ public:
 		sound[58] = ATS_SOUND_CONTINUE;
 		sound[60] = ATS_SOUND_CONTINUE;
 		*/
-
+		//モニタ切替機能
 		if (GetKeyState(0x45) < 0)//Eキーが押されている
 		{
 			if (Ekey == 1)//前フレでOFFの際に実行
@@ -563,7 +542,7 @@ public:
 		{
 			Ekey = 1;
 		}
-
+		//モニタ切替音を鳴らす
 		if (g_mon == true)
 		{
 			sound[38] = ATS_SOUND_PLAY;
@@ -573,21 +552,22 @@ public:
 		{
 			sound[38] = ATS_SOUND_CONTINUE;
 		}
-		if (p92 != 7) {//小田急キーでない時
+		//小田急キーでない時spp音を切る
+		if (p92 != 7) {
 			sound[54] = ATS_SOUND_STOP;
 			sound[55] = ATS_SOUND_STOP;
 		}
-		//return g_output;
+		//非常ブレーキの時緩解音を作動させない
+		if (outputBrake == g_emgBrake)
+		{
+			sound[67] = ATS_SOUND_STOP;
+			sound[68] = ATS_SOUND_STOP;
+		}
 	}
-	/*
-	ATS_API void WINAPI SetPower(int notch)
-	{
-		g_powerNotch = notch;
-	}
-	*/
+
 	void SetBrake(int notch)
 	{
-		//g_brakeNotch = notch;//フラグがたっているとマスコンを動かしたときに表示灯がつく
+		//フラグがたっているとマスコンを動かしたときに表示灯がつく
 		if (flag == 1) {
 			power = 1;
 		}
@@ -688,7 +668,6 @@ public:
 	{
 	}
 
-
 	void SetBeaconData(ATS_BEACONDATA beaconData)
 	{
 		if (beaconData.Type == 70) {//次の停車駅を取得
@@ -705,13 +684,4 @@ public:
 			Eats = beaconData.Optional % 10; //ATS種類を取得
 		}
 	}
-
-
-
-
 };
-
-
-
-
-//ATS_HANDLES g_output; // 出力

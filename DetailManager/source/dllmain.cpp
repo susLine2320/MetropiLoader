@@ -99,10 +99,19 @@ BOOL WINAPI DllMain(
 	return true;
 }
 
+// iniファイルの読み込み
+int IniIntGet(wchar_t* section, wchar_t* key, int standard, wchar_t* dir)
+{
+    int exp;
+    exp = GetPrivateProfileInt(section, key, standard, dir);
+    return exp;
+}
+
 // Called when this plug-in is loaded
 void WINAPI atsLoad()
 {
     wchar_t detailmodules_txt_path[MAX_PATH];
+    wchar_t metropiloader_ini_path[MAX_PATH];
 
     g_first_time = true;
 
@@ -115,7 +124,9 @@ void WINAPI atsLoad()
         memset(g_handles, 0, sizeof(ATS_HANDLES) * 2);
 
         wcscpy_s(detailmodules_txt_path, g_module_dir);
-        wcscat_s(detailmodules_txt_path, L"\\MetropiLoader.ini");
+        wcscpy_s(metropiloader_ini_path, g_module_dir);
+        wcscat_s(detailmodules_txt_path, L"\\detailmodules.txt");
+        wcscat_s(metropiloader_ini_path, L"\\metropiLoader.ini");
         
         ret = _wstat(detailmodules_txt_path, &buf);
     }
@@ -195,6 +206,10 @@ void WINAPI atsLoad()
     {
         char* p = 0; *p = 1;
     }
+
+
+    //INIファイル読み込み
+    //g_trigger.ini_ann1 = IniIntGet(L"Sound", L"here1", 21, detailswitcher_ini_path);
 }
 
 // Called when this plug-in is unloaded
@@ -223,9 +238,9 @@ int WINAPI atsGetPluginVersion()
 // Called when the train is loaded
 void WINAPI atsSetVehicleSpec(ATS_VEHICLESPEC vspec)
 {
-
     g_svcBrake = vspec.BrakeNotches;
     g_emgBrake = g_svcBrake + 1;
+    traB.setVehicleSpec();
 
     for (int i = 0; i < g_num_of_detailmodules; ++i)
     {
@@ -239,7 +254,6 @@ void WINAPI atsSetVehicleSpec(ATS_VEHICLESPEC vspec)
 // Called when the game is started
 void WINAPI atsInitialize(int param)
 {
-
     g_speed = 0;
     traB.Initialize();
 
@@ -465,7 +479,7 @@ void WINAPI atsKeyUp(int ats_key_code)
 		if (g_detailmodules[i].atsKeyUp != NULL)
 		{
 #if (ROUTE == 9)
-            if (i == 0)//小田急PIはSと8を入れ替え
+            if (i == 0)//小田急PIはSと8を入れ替え、9と3を入れ替え
             {
                 if (ats_key_code == ATS_KEY_J)
                     keyup_oer = ATS_KEY_S;
@@ -679,9 +693,9 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                 {
                     beaconOER.Type == 299; //実質的な無効化
                 }
-                else if (beacon_data.Type == 5 && traB.Eats == 0)//5番地上子、OMの時は無効
+                else if ((beacon_data.Type == 5 || beacon_data.Type == 15) && traB.Eats == 0)//5番地上子、OMの時は無効
                 {
-                    beaconOER.Type == 300; //実質的な無効化
+                    beaconOER.Type == 40; //小田急PI側の速度注意を消す
                 }
                 else if (beacon_data.Type == 41 && beacon_data.Optional != 0)//41番地上子、0以外は無効（合図ブザー)
                 {
