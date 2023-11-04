@@ -144,10 +144,10 @@ public:
 		ats95 = panel[12];
 		ats94 = panel[11];
 		ats93 = panel[172];
-		ats90 = panel[37];
-		ats89 = panel[36];
-		ats88 = panel[35];
-		ats87 = panel[34];
+		//ats90 = panel[37];
+		//ats89 = panel[36];
+		//ats88 = panel[35];
+		//ats87 = panel[34];
 		ats85 = panel[33];
 		ats84 = panel[32];
 		ats83 = panel[31];

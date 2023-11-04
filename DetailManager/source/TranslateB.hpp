@@ -10,6 +10,13 @@ float g_current; //電流
 int g_deltaT; // フレーム時間[ms/frame]
 
 int g_OpeNum; //運番
+ATS_BEACONDATA distRef; //距離程補正
+class MIni
+{
+public:
+	int Notch; //ハンドル位置をどの位置で読み込むか
+	int Lag; //メーターラグ秒数[ms]
+};
 
 class TranslateB
 {
@@ -71,6 +78,8 @@ public:
 	int Ekey;
 	int Eats; //ATS種類変更
 
+	MIni p_ini;
+
 	//1回しか呼ばれない
 	void setVehicleSpec()
 	{
@@ -82,6 +91,7 @@ public:
 	void Initialize()
 	{
 		p234 = stnum;
+		m_notchtimer = 0;
 	}
 
 	void Elapse(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
@@ -302,13 +312,9 @@ public:
 			panel[166] = 0;
 		}
 		//パネル出力（うさプラ代替機能）
-		panel[51] = outputBrake == g_emgBrake ? 9 : outputBrake;
 		panel[52] = g_current < 0 && g_speed > 4.99f ? 1 : 0;
 		panel[53] = g_current < 0 && g_speed > 22.99f ? 1 : 0;
 		panel[54] = g_current < 0 && g_speed > 19.99f ? 1 : 0;
-		panel[55] = outputBrake;
-		panel[57] = outputBrake;
-		panel[66] = outputNotch;
 		// サウンド出力
 	/*
 		sound[33] = g_js1a;
@@ -565,6 +571,24 @@ public:
 		}
 	}
 
+	void Notch(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
+	{
+		int brake = 0;
+		int power = 0;
+		//所定時間経過していたら
+		if (g_time > m_notchtimer)
+		{
+			brake = outputBrake;
+			power = outputNotch;
+			//次の目標時間を設定
+			m_notchtimer = p_ini.Lag == -1 ? g_time + 200 + (g_time % 50) * 5 : g_time + p_ini.Lag;
+		}
+		panel[51] = brake == g_emgBrake ? 9 : brake;
+		panel[55] = brake;
+		panel[57] = brake;
+		panel[66] = power;
+	}
+
 	void SetBrake(int notch)
 	{
 		//フラグがたっているとマスコンを動かしたときに表示灯がつく
@@ -684,4 +708,6 @@ public:
 			Eats = beaconData.Optional % 10; //ATS種類を取得
 		}
 	}
+private:
+	int m_notchtimer; //ノッチ表示灯タイマー
 };
