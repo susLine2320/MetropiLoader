@@ -91,6 +91,8 @@ public:
 	int s67;
 	int s68;
 	int s89;
+	int s46;
+	int s115;
 
 	int oerRev;
 	int extRev;
@@ -306,6 +308,8 @@ public:
 		s55 = sound[4];
 		s67 = sound[7];
 		s68 = sound[8];
+		s46 = sound[16];
+		s115 = sound[17];
 		//s89 = sound[5];
 
 		// サウンド出力（変換）
@@ -317,6 +321,8 @@ public:
 		sound[55] = s55;
 		sound[67] = s67;
 		sound[68] = s68;
+		sound[46] = s46;
+		sound[115] = s115;
 		//sound[89] = s89;
 
 		//sound[238] = g_brakeNotch; //TranslateBに値を転送する
@@ -330,6 +336,8 @@ public:
 		sound[5] = ATS_SOUND_STOP;
 		sound[7] = ATS_SOUND_STOP;
 		sound[8] = ATS_SOUND_STOP;
+		sound[16] = ATS_SOUND_STOP;
+		sound[17] = ATS_SOUND_STOP;
 		sound[34] = ATS_SOUND_STOP;
 		sound[41] = ATS_SOUND_STOP;
 		//return g_output;

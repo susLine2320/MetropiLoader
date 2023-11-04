@@ -16,6 +16,9 @@ class MIni
 public:
 	int Notch; //ハンドル位置をどの位置で読み込むか
 	int Lag; //メーターラグ秒数[ms]
+	int Open2; //回生開放をどの位置で読み込むか
+	int Snow; //耐雪ブレーキを使用するか
+	int Snow2; //耐雪ブレーキをどの位置で読み込むか
 };
 
 class TranslateB
@@ -41,6 +44,8 @@ public:
 	bool g_jsc7; //小田急乗降促進放送
 	bool g_jsc8; //東葉乗降促進放送
 	bool g_mon;//モニタ操作音
+	bool g_openon;//回生開放オン
+	bool g_openoff;//回生開放オフ
 	int p92;
 	int p72;
 	int p4;
@@ -61,22 +66,26 @@ public:
 	int p138;
 	int p160;
 	int p166;
+	int p176;
 	int p234;
 	int oerNotch;//小田急PIの出力P
 	int oerBrake;//小田急PIの出力B
-	int tmNotch;
-	int tmBrake;
-	int outputNotch;
-	int outputBrake;
+	int tmNotch;//メトロPIの出力P
+	int tmBrake;//メトロPIの出力B
+	int outputNotch;//出力ノッチ
+	int outputBrake;//出力ブレーキ
 	bool UsaoDisable;//うさプラの出力切断
 	bool ATSFlag;
 	bool flag;
 	bool power;
-	int stnum;
+	int stnum;//駅番号（小田急）
 	int direction;
 	int direction89;
 	int Ekey;
 	int Eats; //ATS種類変更
+	bool Open_nfb; //回生開放
+	int UseOpen; //回生開放を使用するか
+	int Snow3; //B1抑速
 
 	MIni p_ini;
 
@@ -85,6 +94,7 @@ public:
 	{
 		direction89 = 2;
 		Eats = 1;
+		Open_nfb = false;
 	}
 
 	//駅ジャンプの度に呼ばれる
@@ -96,20 +106,6 @@ public:
 
 	void Elapse(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
 	{
-
-
-		// ハンドル出力
-		/*
-		if (g_pilotlamp)
-		{
-			g_output.Reverser = g_reverser;
-		}
-		else
-		{
-			g_output.Reverser = 0;
-		}
-		g_output.ConstantSpeed = ATS_CONSTANTSPEED_CONTINUE;
-		*/
 		//パネル入力
 		p92 = panel[92];
 		p72 = panel[72];
@@ -130,12 +126,9 @@ public:
 		p137 = panel[137];
 		p138 = panel[138];
 		p160 = panel[160];
+		p176 = panel[176];
 
-		//サウンド入力
-		//oerBrake = sound[238];
-		//oerNotch = sound[239];
-
-
+		//ハンドル出力
 		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
 		{
 			outputBrake = oerBrake; //小田急PIからの出力Bを使用
@@ -155,192 +148,47 @@ public:
 			outputNotch = tmNotch; //うさプラからの出力Pを使用
 			sound[25] = ATS_SOUND_STOP; //ATSベルをストップ
 			sound[21] = ATS_SOUND_STOP; //ATSベルをストップ
-			if (p160 == 7) {
+			if (p160 == 7)
 				sound[0] = ATS_SOUND_STOP;
-			}
 		}
 
-		// パネル出力（表示灯制御）
-		if (p92 == 7 && (p72 == 0)) {//マスコンキー小田急、かつATSのときにATS表示灯点灯フラグを立てる
-			flag = 1;
-		}
-		else {
-			flag = 0;
-		}
-		if (flag == 0) {
-			power = 0;
-		}
-		if (power == 1 && p94 == 1) {//速度注意
-			p94 = 1;
-		}
-		else {
-			p94 = 0;
-		}
-		if (power == 1 && p95 == 1) {//動作
-			p95 = 1;
-		}
-		else {
-			p95 = 0;
-		}
-		if (power == 1 && p97 == 1) {//OM-ATS電源
-			p97 = 1;
-		}
-		else {
-			p97 = 0;
-		}
-		if (power == 1 && p98 == 1) {//D-ATS-P電源
-			p98 = 1;
-		}
-		else {
-			p98 = 0;
-		}
-		if (power == 1 && p99 == 1) {//無信号
-			p99 = 1;
-		}
-		else {
-			p99 = 0;
-		}
-		if (power == 1 && p100 == 1) {//パターン接近
-			p100 = 1;
-		}
-		else {
-			p100 = 0;
-		}
-		if (power == 1 && p138 == 1) {//TASC制御
-			p138 = 1;
-		}
-		else {
-			p138 = 0;
-		}
-		if (power == 1 && p136 == 1) {//TASC電源
-			p136 = 1;
-		}
-		else {
-			p136 = 0;
-		}
+		//表示灯制御
+		flag = p92 == 7 && (p72 == 0) ? 1 : 0;//マスコンキー小田急、かつATSのときにATS表示灯点灯フラグを立てる
+		if (flag == 0) { power = 0; }
+		p94 = power == 1 && p94 == 1 ? 1 : 0;//速度注意
+		p95 = power == 1 && p95 == 1 ? 1 : 0;//動作
+		p97 = power == 1 && p97 == 1 ? 1 : 0;//OM-ATS電源
+		p98 = power == 1 && p98 == 1 ? 1 : 0;//D-ATS-P電源
+		p99 = power == 1 && p99 == 1 ? 1 : 0;//無信号
+		p100 = power == 1 && p100 == 1 ? 1 : 0;//パターン接近
+		p138 = power == 1 && p138 == 1 ? 1 : 0;//TASC制御
+		p136 = power == 1 && p136 == 1 ? 1 : 0;//TASC電源
 		//2303追加
-		if (p92 == 7 && p36 == 1) {//OM-ATS
-			p36 = 1;
-		}
-		else {
-			p36 = 0;
-		}
-		if (Eats == 0 && p92 == 7 && p37 == 1) {//動作
-			p37 = 1;
-		}
-		else {
-			p37 = 0;
-		}
-		if (Eats == 0 && p92 == 7 && p38 == 1) {//速度注意
-			p38 = 1;
-		}
-		else {
-			p38 = 0;
-		}
-		//終了
-		if (p4 == 1 || p39 == 1) {//フルステップ　4/39片方成立時に点灯させる
-			panel[39] = 1;
-		}
-		else {
-			panel[39] = 0;
-		}
-		if ((p36 == 1 || p97 == 1) && p98 == 0) {//OM-ATS　小田急PIがOM-ATS設定になっていること前提
-			panel[36] = 1;
-		}
-		else {
-			panel[36] = 0;
-		}
-		if (p38 == 1 || p94 == 1) {//速度注意　38/94片方成立時に点灯させる
-			panel[38] = 1;
-		}
-		else {
-			panel[38] = 0;
-		}
-		if (p37 == 1 || p95 == 1) {//動作　37/95片方成立時に点灯させる
-			panel[37] = 1;
-		}
-		else {
-			panel[37] = 0;
-		}
-		if (p98 == 1) {//D-ATS-P電源
-			panel[98] = 1;
-		}
-		else {
-			panel[98] = 0;
-		}
-		if (p99 == 1) {//無信号
-			panel[99] = 1;
-		}
-		else {
-			panel[99] = 0;
-		}
-		if (p100 == 1) {//パターン接近
-			panel[127] = 1;
-		}
-		else {
-			panel[127] = 0;
-		}
-		if (p136 == 1) {//TASC電源
-			panel[136] = 1;
-		}
-		else {
-			panel[136] = 0;
-		}
-		if (p19 == 1 && p137 == 1) {//ATO電源　ATC投入が前提（ATSでは作動しない）
-			panel[137] = 1;
-		}
-		else {
-			panel[137] = 0;
-		}
-		if (p138 == 1) {//TASC制御
-			panel[138] = 1;
-		}
-		else {
-			panel[138] = 0;
-		}
-		if (p160 == 7) {//次の停車駅表示は小田急キーの時のみ
-			panel[234] = p234 % 100;
-		}
-		else {
-			panel[234] = 0;
-		}
+		p36 = p92 == 7 && p36 == 1 ? 1 : 0;//OM-ATS
+		p37 = Eats == 0 && p92 == 7 && p37 == 1 ? 1 : 0;//動作
+		p38 = Eats == 0 && p92 == 7 && p38 == 1 ? 1 : 0;//速度注意
+		//出力
+		panel[39] = p4 == 1 || p39 == 1 ? 1 : 0;//フルステップ　4/39片方成立時に点灯させる
+		panel[36] = (p36 == 1 || p97 == 1) && p98 == 0 ? 1 : 0;//OM-ATS　小田急PIがOM-ATS設定になっていること前提
+		panel[38] = p38 == 1 || p94 == 1 ? 1 : 0;//速度注意　38/94片方成立時に点灯させる
+		panel[37] = p37 == 1 || p95 == 1 ? 1 : 0;//動作　37/95片方成立時に点灯させる
+		panel[98] = p98;//D-ATS-P電源
+		panel[99] = p99;//無信号
+		panel[127] = p100;//パターン接近
+		panel[136] = p136;//TASC電源
+		panel[137] = p19 == 1 && p137 == 1 ? 1 : 0;//ATO電源　ATC投入が前提（ATSでは作動しない）
+		panel[138] = p138;//TASC制御
+		panel[176] = p176 == 0 ? 0 : max(p92, 1);//耐雪ブレーキ　マスコンキーごとに値変化
+		panel[234] = p160 == 7 ? p234 % 100 : 0;//次の停車駅表示は小田急キーの時のみ
 		//以下独自仕様
-		if (p166 == 1) {
-			panel[166] = 1;
-		}
-		else {
-			panel[166] = 0;
-		}
+		panel[166] = p166;//モニタ
+		panel[170] = Open_nfb;//回生開放
 		//パネル出力（うさプラ代替機能）
 		panel[52] = g_current < 0 && g_speed > 4.99f ? 1 : 0;
 		panel[53] = g_current < 0 && g_speed > 22.99f ? 1 : 0;
 		panel[54] = g_current < 0 && g_speed > 19.99f ? 1 : 0;
-		// サウンド出力
-	/*
-		sound[33] = g_js1a;
-		sound[35] = g_js1b;
-		sound[36] = g_js2;
-		sound[38] = g_js3;
-		sound[50] = g_js4;
-		sound[52] = g_js5;
-		sound[54] = g_js6a;
-		sound[55] = g_js6b;
-		sound[57] = g_js7;
-		sound[59] = g_js8;
-	/*
-		sound[34] = g_jsc1;
-		sound[37] = g_jsc2;
-		sound[39] = g_jsc3;
-		sound[51] = g_jsc4;
-		sound[53] = g_jsc5;
-		sound[56] = g_jsc6;
-		sound[58] = g_jsc7;
-		sound[60] = g_jsc8;
-	*/
-	//安全上の処理
-		//sound[238] = ATS_SOUND_STOP;
-		//sound[239] = ATS_SOUND_STOP;
 
+		// サウンド出力
 		//乗降促進
 		if (g_js1a == true)
 		{
@@ -501,17 +349,24 @@ public:
 		{
 			sound[58] = ATS_SOUND_CONTINUE;
 		}
-		/*
-		if (g_jsc8 == true)
+
+		//回生開放
+		if (g_openon)
 		{
-			sound[60] = ATS_SOUND_PLAY;
-			g_jsc8 = false;
+			sound[17] = ATS_SOUND_PLAY;
+			g_openon = false;
 		}
 		else
+			sound[17] = ATS_SOUND_CONTINUE;
+		if (g_openoff)
 		{
-			sound[60] = ATS_SOUND_CONTINUE;
+			sound[16] = ATS_SOUND_PLAY;
+			g_openoff = false;
 		}
-		*/
+		else
+			sound[16] = ATS_SOUND_CONTINUE;
+
+
 		/*g_js1a = ATS_SOUND_STOP;
 		g_js1b = ATS_SOUND_STOP;
 		g_js2 = ATS_SOUND_STOP;
@@ -571,6 +426,7 @@ public:
 		}
 	}
 
+	//ノッチ表示灯
 	void Notch(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
 	{
 		int brake = 0;
@@ -589,6 +445,26 @@ public:
 		panel[66] = power;
 	}
 
+	//回生開放
+	int Open(int Reverser, int Brake)
+	{
+		if (Open_nfb && g_speed > 0 && Brake > 0)
+			return 0;
+		else
+			return Reverser;
+	}
+
+	//耐雪ブレーキ
+	int Snow(int Brake)
+	{
+		if (Snow3 == 0 && p176 == 1 && Brake == 0)//B1抑速なし
+			return 1;
+		else if (Snow3 == 1 && p176 == 1 && Brake <= 1)//B1抑速あり
+			return 2;
+		else
+			return Brake;
+	}
+
 	void SetBrake(int notch)
 	{
 		//フラグがたっているとマスコンを動かしたときに表示灯がつく
@@ -605,7 +481,7 @@ public:
 	
 	void KeyDown(int atsKeyCode)
 	{
-		if (atsKeyCode == ATS_KEY_D && g_speed == 0)
+		if (atsKeyCode == ATS_KEY_D && g_speed == 0)//乗降促進
 		{
 			if (p92 == 1 && direction == 1)
 				g_js1a = true;
@@ -632,15 +508,16 @@ public:
 			else
 				g_js1a = true;
 		}
-		if (atsKeyCode == ATS_KEY_E)
+		if (atsKeyCode == ATS_KEY_E && g_handles[0].Brake >= 4 && g_handles[0].Power == 0 && UseOpen == 1)//回生開放
 		{
-			/*
-			g_mon = true;
-			if (p166 == 1)
-				p166 = 0;
-			else
-				p166 = 1;
-				*/
+			if (Open_nfb) {
+				g_openoff = true;
+				Open_nfb = false;
+			}
+			else {
+				g_openon = true;
+				Open_nfb = true;
+			}
 		}
 	}
 

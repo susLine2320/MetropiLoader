@@ -118,6 +118,7 @@ void WINAPI atsLoad()
     g_first_time = true;
 
     int ret;
+    int ret2;
     {
         struct _stat buf;
 
@@ -128,9 +129,10 @@ void WINAPI atsLoad()
         wcscpy_s(detailmodules_txt_path, g_module_dir);
         wcscpy_s(metropiloader_ini_path, g_module_dir);
         wcscat_s(detailmodules_txt_path, L"\\detailmodules.txt");
-        wcscat_s(metropiloader_ini_path, L"\\metropiLoader.ini");
+        wcscat_s(metropiloader_ini_path, L"\\MetropiLoader.ini");
         
         ret = _wstat(detailmodules_txt_path, &buf);
+        ret2 = _wstat(metropiloader_ini_path, &buf);
     }
 
     if (!ret)
@@ -209,10 +211,21 @@ void WINAPI atsLoad()
         char* p = 0; *p = 1;
     }
 
+    if (ret2)
+    {
+        char* p = 0; *p = 1;
+        return;
+    }
+
 
     //INIƒtƒ@ƒCƒ‹“Ç‚İ‚İ
     p_ini.Notch = max(min(IniIntGet(L"Disp", L"Notch", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1‰ñ–Ú‚©‚ç“Ç‚İ‚İ‰ñ”‚Ü‚Å
+    p_ini.Open2 = max(min(IniIntGet(L"Emulate", L"OpenTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1‰ñ–Ú‚©‚ç“Ç‚İ‚İ‰ñ”‚Ü‚Å
+    p_ini.Snow2 = max(min(IniIntGet(L"Emulate", L"SnowTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1‰ñ–Ú‚©‚ç“Ç‚İ‚İ‰ñ”‚Ü‚Å
     p_ini.Lag = max(-1, IniIntGet(L"Disp", L"MeterLag", 0, metropiloader_ini_path));//0ˆÈã‚Ì”
+    traB.UseOpen = max(min(IniIntGet(L"Emulate", L"UseOpen", 0, metropiloader_ini_path), 1), 0);//0ˆÈã‚Ì”
+    p_ini.Snow = max(min(IniIntGet(L"Emulate", L"UseSnow", 0, metropiloader_ini_path), 1), 0);//0ˆÈã‚Ì”
+    traB.Snow3 = max(min(IniIntGet(L"Emulate", L"Hbk", 0, metropiloader_ini_path), 1), 0);//0ˆÈã‚Ì”
 }
 
 // Called when this plug-in is unloaded
@@ -410,9 +423,17 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
                 ret.Brake = traB.outputBrake;
                 ret.Power = traB.outputNotch;
             }
+            if (i == p_ini.Snow2 && p_ini.Snow == 1)
+            {
+                ret.Brake = traB.Snow(ret.Brake);
+            }
             if (i == p_ini.Notch)
             {
                 traB.Notch(vs, p_panel, p_sound);
+            }
+            if (i == p_ini.Open2)
+            {
+                ret.Reverser = traB.Open(ret.Reverser, ret.Brake);
             }
         }
     }
