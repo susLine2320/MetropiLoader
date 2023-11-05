@@ -15,10 +15,10 @@ class MIni
 {
 public:
 	int Notch; //ハンドル位置をどの位置で読み込むか
-	int Lag; //メーターラグ秒数[ms]
 	int Open2; //回生開放をどの位置で読み込むか
 	int Snow; //耐雪ブレーキを使用するか
 	int Snow2; //耐雪ブレーキをどの位置で読み込むか
+	int Hsa2; //勾配起動をどの位置で行うか
 };
 
 class TranslateB
@@ -64,6 +64,10 @@ public:
 	int p136;
 	int p137;
 	int p138;
+	int p140;
+	int p141;
+	int p142;
+	int p143;
 	int p160;
 	int p166;
 	int p176;
@@ -74,6 +78,8 @@ public:
 	int tmBrake;//メトロPIの出力B
 	int outputNotch;//出力ノッチ
 	int outputBrake;//出力ブレーキ
+	int dispNotch;//表示ノッチ
+	int dispBrake;//表示ブレーキ
 	bool UsaoDisable;//うさプラの出力切断
 	bool ATSFlag;
 	bool flag;
@@ -86,6 +92,11 @@ public:
 	bool Open_nfb; //回生開放
 	int UseOpen; //回生開放を使用するか
 	int Snow3; //B1抑速
+	int Lag; //メーターラグ秒数[ms]
+	int RpbNotch; //転動防止段数
+	int UseHsa; //勾配起動を使用するか
+	int HsaNotch; //勾配起動段数
+	bool Hsa3; //Sキーの読み込み状況
 
 	MIni p_ini;
 
@@ -125,7 +136,11 @@ public:
 		p136 = panel[136];
 		p137 = panel[137];
 		p138 = panel[138];
-		p160 = panel[160];
+		p140 = panel[140];
+		p141 = panel[141];
+		p142 = panel[142];
+		p143 = panel[143];
+ 		p160 = panel[160];
 		p176 = panel[176];
 
 		//ハンドル出力
@@ -137,14 +152,14 @@ public:
 		}
 		else if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 0)//OM-ATS
 		{
-			outputBrake = tmBrake; //うさプラからの出力Bを使用
+			outputBrake = panel[139] >= 1 ? max(tmBrake, min(RpbNotch, g_svcBrake)) : tmBrake; //うさプラからの出力Bを使用
 			outputNotch = tmNotch; //うさプラからの出力Pを使用
 			sound[21] = ATS_SOUND_STOP;
 			//ATSベルは有効
 		}
 		else
 		{
-			outputBrake = tmBrake; //うさプラからの出力Bを使用
+			outputBrake = panel[139] >= 1 ? max(tmBrake, min(RpbNotch, g_svcBrake)) : tmBrake; //うさプラからの出力Bを使用
 			outputNotch = tmNotch; //うさプラからの出力Pを使用
 			sound[25] = ATS_SOUND_STOP; //ATSベルをストップ
 			sound[21] = ATS_SOUND_STOP; //ATSベルをストップ
@@ -167,6 +182,11 @@ public:
 		p36 = p92 == 7 && p36 == 1 ? 1 : 0;//OM-ATS
 		p37 = Eats == 0 && p92 == 7 && p37 == 1 ? 1 : 0;//動作
 		p38 = Eats == 0 && p92 == 7 && p38 == 1 ? 1 : 0;//速度注意
+		//2311追加
+		p140 = power == 1 && p140 == 1 ? 1 : 0;//TASCブレーキ
+		p141 = power == 1 && p141 >= 1 ? p141 : 0;//TASCブレーキ
+		p142 = power == 1 && p142 < 10 ? p142: 10;//TASCブレーキ
+		p143 = power == 1 && p143 < 10 ? p143 : 10;//TASCブレーキ
 		//出力
 		panel[39] = p4 == 1 || p39 == 1 ? 1 : 0;//フルステップ　4/39片方成立時に点灯させる
 		panel[36] = (p36 == 1 || p97 == 1) && p98 == 0 ? 1 : 0;//OM-ATS　小田急PIがOM-ATS設定になっていること前提
@@ -178,6 +198,10 @@ public:
 		panel[136] = p136;//TASC電源
 		panel[137] = p19 == 1 && p137 == 1 ? 1 : 0;//ATO電源　ATC投入が前提（ATSでは作動しない）
 		panel[138] = p138;//TASC制御
+		panel[140] = p140;
+		panel[141] = p141;
+		panel[142] = p142;
+		panel[143] = p143;
 		panel[176] = p176 == 0 ? 0 : max(p92, 1);//耐雪ブレーキ　マスコンキーごとに値変化
 		panel[234] = p160 == 7 ? p234 % 100 : 0;//次の停車駅表示は小田急キーの時のみ
 		//以下独自仕様
@@ -427,22 +451,20 @@ public:
 	}
 
 	//ノッチ表示灯
-	void Notch(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
+	void Notch(int* panel, int outB, int outP)
 	{
-		int brake = 0;
-		int power = 0;
 		//所定時間経過していたら
 		if (g_time > m_notchtimer)
 		{
-			brake = outputBrake;
-			power = outputNotch;
+			dispBrake = outB;
+			dispNotch = outP;
 			//次の目標時間を設定
-			m_notchtimer = p_ini.Lag == -1 ? g_time + 200 + (g_time % 50) * 5 : g_time + p_ini.Lag;
+			m_notchtimer = Lag == -1 ? g_time + 200 + (g_time % 50) * 5 : g_time + Lag;
 		}
-		panel[51] = brake == g_emgBrake ? 9 : brake;
-		panel[55] = brake;
-		panel[57] = brake;
-		panel[66] = power;
+		panel[51] = dispBrake == g_emgBrake ? 9 : dispBrake;
+		panel[55] = dispBrake;
+		panel[57] = dispBrake;
+		panel[66] = dispNotch;
 	}
 
 	//回生開放
@@ -463,6 +485,16 @@ public:
 			return 2;
 		else
 			return Brake;
+	}
+
+	//勾配起動
+	int Hsa(int Brake)
+	{
+		if (g_pilotlamp && Hsa3 && Brake <= min(HsaNotch, g_svcBrake) && g_speed < 1.0f)
+		{
+			return min(HsaNotch, g_svcBrake);
+		}
+		return Brake;
 	}
 
 	void SetBrake(int notch)
@@ -519,6 +551,8 @@ public:
 				Open_nfb = true;
 			}
 		}
+		if (atsKeyCode == ATS_KEY_S)//勾配起動
+			Hsa3 = true;
 	}
 
 	void KeyUp(int hornType)
@@ -557,6 +591,8 @@ public:
 					g_jsc1 = true;
 			}
 		}
+		if (hornType == ATS_KEY_S)
+			Hsa3 = false;
 	}
 
 

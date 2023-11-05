@@ -219,13 +219,17 @@ void WINAPI atsLoad()
 
 
     //INIファイル読み込み
-    p_ini.Notch = max(min(IniIntGet(L"Disp", L"Notch", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
+    p_ini.Notch = max(min(IniIntGet(L"Disp", L"MeterTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
     p_ini.Open2 = max(min(IniIntGet(L"Emulate", L"OpenTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
     p_ini.Snow2 = max(min(IniIntGet(L"Emulate", L"SnowTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
-    p_ini.Lag = max(-1, IniIntGet(L"Disp", L"MeterLag", 0, metropiloader_ini_path));//0以上の数
+    p_ini.Hsa2 = max(min(IniIntGet(L"Emulate", L"HsaTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
+    traB.Lag = max(-1, IniIntGet(L"Disp", L"MeterLag", 0, metropiloader_ini_path));//0以上の数
     traB.UseOpen = max(min(IniIntGet(L"Emulate", L"UseOpen", 0, metropiloader_ini_path), 1), 0);//0以上の数
     p_ini.Snow = max(min(IniIntGet(L"Emulate", L"UseSnow", 0, metropiloader_ini_path), 1), 0);//0以上の数
     traB.Snow3 = max(min(IniIntGet(L"Emulate", L"Hbk", 0, metropiloader_ini_path), 1), 0);//0以上の数
+    traB.RpbNotch = max(1, IniIntGet(L"Emulate", L"RpbNotch", 4, metropiloader_ini_path));//0以上の数
+    traB.UseHsa = max(min(IniIntGet(L"Emulate", L"UseHsa", 0, metropiloader_ini_path), 1), 0);//0以上の数
+    traB.HsaNotch = max(1, IniIntGet(L"Emulate", L"HsaNotch", 3, metropiloader_ini_path));//0以上の数
 }
 
 // Called when this plug-in is unloaded
@@ -377,12 +381,15 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
         traA.Elapse(vs, p_panel, p_sound);
         
         ret.Reverser = traA.extRev;
+        //暫定追加
+        ret.Brake = retOER.Brake;
+        ret.Power = retOER.Power;
 
         //2個目以降のPI
         for (int i = 1; i < g_num_of_detailmodules; ++i)
         {
             
-            if (g_detailmodules[i].last_handle.Power != ret.Power)//ret（前のPIからのpower）と比較
+            if (g_detailmodules[i].last_handle.Power != ret.Power)//ret（前フレームのpower）と比較
             {
 				if (g_detailmodules[i].atsSetPower != NULL)
 				{
@@ -429,11 +436,15 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
             }
             if (i == p_ini.Notch)
             {
-                traB.Notch(vs, p_panel, p_sound);
+                traB.Notch(p_panel, ret.Brake, ret.Power);
             }
             if (i == p_ini.Open2)
             {
                 ret.Reverser = traB.Open(ret.Reverser, ret.Brake);
+            }
+            if (i == p_ini.Hsa2)
+            {
+                ret.Brake = traB.Hsa(ret.Brake);
             }
         }
     }
