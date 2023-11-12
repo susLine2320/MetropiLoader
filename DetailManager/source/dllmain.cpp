@@ -58,9 +58,9 @@ bool g_first_time;
 #include "ats_define.hpp"
 
 #include "TranslateB.hpp"
-#include "TranslateA.hpp"
+//#include "TranslateA.hpp"
 
-TranslateA traA;
+//TranslateA traA;
 TranslateB traB;
 MIni p_ini;
 
@@ -224,6 +224,7 @@ void WINAPI atsLoad()
     p_ini.Snow2 = max(min(IniIntGet(L"Emulate", L"SnowTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
     p_ini.Hsa2 = max(min(IniIntGet(L"Emulate", L"HsaTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
     traB.Lag = max(-1, IniIntGet(L"Disp", L"MeterLag", 0, metropiloader_ini_path));//0以上の数
+    traB.MonType = max(min(IniIntGet(L"Disp", L"MonitorType", 0, metropiloader_ini_path), 2), 0);//0:なし、1: 初期型、2:後期型
     traB.UseOpen = max(min(IniIntGet(L"Emulate", L"UseOpen", 0, metropiloader_ini_path), 1), 0);//0以上の数
     p_ini.Snow = max(min(IniIntGet(L"Emulate", L"UseSnow", 0, metropiloader_ini_path), 1), 0);//0以上の数
     traB.Snow3 = max(min(IniIntGet(L"Emulate", L"Hbk", 0, metropiloader_ini_path), 1), 0);//0以上の数
@@ -375,12 +376,12 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
         //小田急PIのPBをメモリー
         traB.oerBrake = ret.Brake;
         traB.oerNotch = ret.Power;
-        traA.oerRev = ret.Reverser;
+        traB.oerRev = ret.Reverser;
 
         
-        traA.Elapse(vs, p_panel, p_sound);
+        traB.ElapseA(vs, p_panel, p_sound);
         
-        ret.Reverser = traA.extRev;
+        ret.Reverser = traB.extRev;
         //暫定追加
         ret.Brake = retOER.Brake;
         ret.Power = retOER.Power;
@@ -425,7 +426,8 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
                 traB.tmNotch = ret.Power;
                 traB.tmBrake = ret.Brake;
 
-                traB.Elapse(vs, p_panel, p_sound);
+                traB.ElapseB(vs, p_panel, p_sound);
+                traB.ElapseC(vs, p_panel, p_sound);
 
                 ret.Brake = traB.outputBrake;
                 ret.Power = traB.outputNotch;
@@ -486,20 +488,17 @@ void WINAPI atsKeyDown(int ats_key_code)
 		if (g_detailmodules[i].atsKeyDown != NULL)
 		{
 #if (ROUTE == 9)
-            if (i == 0)//小田急PIはSと8を入れ替え、9と3を入れ替え
+            if (i == 0)//小田急PIは8（勾配起動）、9（回生開放）を無効化、B2（TASC開放）をA1に移動
             {
-                if (ats_key_code == ATS_KEY_J)
-                    key_oer = ATS_KEY_S;
-                else if (ats_key_code == ATS_KEY_S)
-                    key_oer = ATS_KEY_J;
-                else if (ats_key_code == ATS_KEY_E)
-                    key_oer = ATS_KEY_K;
-                else if (ats_key_code == ATS_KEY_K)
-                    key_oer = ATS_KEY_E;
+                if (ats_key_code == ATS_KEY_F || ats_key_code == ATS_KEY_J || ats_key_code == ATS_KEY_K){}
                 else
-                    key_oer = ats_key_code;
-
-                g_detailmodules[i].atsKeyDown(key_oer);
+                {
+                    if (ats_key_code == ATS_KEY_B2)
+                        key_oer = ATS_KEY_A1;
+                    else
+                        key_oer = ats_key_code;
+                    g_detailmodules[i].atsKeyDown(key_oer);
+                }
             }
             else
             {
@@ -712,11 +711,11 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                     beaconTM.Optional = beacon_data.Optional;
                 }
                 */
-                else if (beacon_data.Type == 4 && traB.Eats != 0)//4番地上子 OM以外の際は無効
+                else if (beacon_data.Type == 4 && traB.Eats != 0 && beacon_data.Optional != 0)//4番地上子 OM以外かつsenddata0以外は無効
                 {
                     beaconTM.Type = 298;
                 }
-                else if (beacon_data.Type == 5 && traB.Eats != 0)//5番地上子 OM以外の際は無効
+                else if (beacon_data.Type == 5 && traB.Eats != 0 && beacon_data.Optional != 0)//5番地上子 OM以外かつsenddata0以外は無効
                 {
                     beaconTM.Type = 299;
                 }
@@ -745,11 +744,11 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                 {
                     beaconOER.Type = 297; //実質的な無効化
                 }
-                else if (beacon_data.Type == 4 && traB.Eats == 0)//4番地上子、OMの時は無効
+                else if (beacon_data.Type == 4 && (traB.Eats == 0 || beacon_data.Optional == 0))//4番地上子、OMの時は無効
                 {
                     beaconOER.Type = 299; //実質的な無効化
                 }
-                else if ((beacon_data.Type == 5 || beacon_data.Type == 15) && traB.Eats == 0)//5番地上子、OMの時は無効
+                else if ((beacon_data.Type == 5 || beacon_data.Type == 15) && (traB.Eats == 0 || beacon_data.Optional == 0))//5番地上子、OMの時は無効
                 {
                     beaconOER.Type = 40; //小田急PI側の速度注意を消す
                 }

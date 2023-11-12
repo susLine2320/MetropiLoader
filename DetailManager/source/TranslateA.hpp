@@ -1,7 +1,7 @@
 class TranslateA
 {
 public:
-	bool ats8;
+	bool ats10;
 	bool ats24;
 	int ats35;
 	int ats40;
@@ -99,11 +99,6 @@ public:
 
 	int ats213;
 
-	/*
-	void Initialize(void)
-	{
-	}
-	*/
 
 	void Elapse(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
 	{
@@ -159,7 +154,7 @@ public:
 		ats40 = panel[51];
 		ats35 = panel[50];
 		ats24 = panel[8];
-		ats8 = panel[10];
+		ats10 = panel[10];
 		//ats126 = panel[43];
 		ats127 = panel[43];
 		ats128 = panel[2];
@@ -217,8 +212,28 @@ public:
 		ats244 = panel[85];
 		ats255 = panel[82];
 
+		//試験用
+		//panel[213] = ats213;
+
+		//サウンド入力（変換）
+		s21 = sound[41];
+		//s23 = sound[34];
+		s25 = sound[0];
+		s26 = sound[1];
+		s54 = sound[3];
+		s55 = sound[4];
+		s67 = sound[7];
+		s68 = sound[8];
+		s46 = sound[16];
+		s115 = sound[17];
+		//s89 = sound[5];
+
+	}
+
+	void ElapseB(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
+	{
 		// パネル出力
-		panel[8] = ats8;
+		panel[10] = ats10;
 		panel[24] = ats24;
 		panel[35] = ats35;
 		panel[40] = ats40;
@@ -296,22 +311,6 @@ public:
 		panel[244] = ats244;
 		panel[255] = ats255;
 
-		//試験用
-		//panel[213] = ats213;
-
-		//サウンド入力（変換）
-		s21 = sound[41];
-		//s23 = sound[34];
-		s25 = sound[0];
-		s26 = sound[1];
-		s54 = sound[3];
-		s55 = sound[4];
-		s67 = sound[7];
-		s68 = sound[8];
-		s46 = sound[16];
-		s115 = sound[17];
-		//s89 = sound[5];
-
 		// サウンド出力（変換）
 		sound[21] = s21;
 		sound[23] = s23;
@@ -325,9 +324,6 @@ public:
 		sound[115] = s115;
 		//sound[89] = s89;
 
-		//sound[238] = g_brakeNotch; //TranslateBに値を転送する
-		//sound[239] = g_powerNotch; //TranslateBに値を転送する
-
 		//サウンド出力（元番号を0に）
 		sound[0] = ATS_SOUND_STOP;
 		sound[1] = ATS_SOUND_STOP;
@@ -340,7 +336,6 @@ public:
 		sound[17] = ATS_SOUND_STOP;
 		sound[34] = ATS_SOUND_STOP;
 		sound[41] = ATS_SOUND_STOP;
-		//return g_output;
 	}
 	/*
 	ATS_API void WINAPI SetPower(int notch)
