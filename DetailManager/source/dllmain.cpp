@@ -224,7 +224,9 @@ void WINAPI atsLoad()
     p_ini.Snow2 = max(min(IniIntGet(L"Emulate", L"SnowTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
     p_ini.Hsa2 = max(min(IniIntGet(L"Emulate", L"HsaTiming", 1, metropiloader_ini_path), g_num_of_detailmodules), 1);//1回目から読み込み回数まで
     traB.Lag = max(-1, IniIntGet(L"Disp", L"MeterLag", 0, metropiloader_ini_path));//0以上の数
+    traB.SmLag = max(-1, IniIntGet(L"Disp", L"SmLag", 0, metropiloader_ini_path));//0以上の数
     traB.MonType = max(min(IniIntGet(L"Disp", L"MonitorType", 0, metropiloader_ini_path), 2), 0);//0:なし、1: 初期型、2:後期型
+    traB.ElecBrk = max(IniIntGet(L"Disp", L"ElecBrkMin", 5, metropiloader_ini_path), 0);//電気ブレーキ最小速度
     traB.UseOpen = max(min(IniIntGet(L"Emulate", L"UseOpen", 0, metropiloader_ini_path), 1), 0);//0以上の数
     p_ini.Snow = max(min(IniIntGet(L"Emulate", L"UseSnow", 0, metropiloader_ini_path), 1), 0);//0以上の数
     traB.Snow3 = max(min(IniIntGet(L"Emulate", L"Hbk", 0, metropiloader_ini_path), 1), 0);//0以上の数
@@ -431,6 +433,7 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
 
                 ret.Brake = traB.outputBrake;
                 ret.Power = traB.outputNotch;
+                traB.Speed(p_panel, p_panel[171]);
             }
             if (i == p_ini.Snow2 && p_ini.Snow == 1)
             {
@@ -490,11 +493,11 @@ void WINAPI atsKeyDown(int ats_key_code)
 #if (ROUTE == 9)
             if (i == 0)//小田急PIは8（勾配起動）、9（回生開放）を無効化、B2（TASC開放）をA1に移動
             {
-                if (ats_key_code == ATS_KEY_F || ats_key_code == ATS_KEY_J || ats_key_code == ATS_KEY_K){}
+                if (ats_key_code == ATS_KEY_B2 || ats_key_code == ATS_KEY_F || ats_key_code == ATS_KEY_J || ats_key_code == ATS_KEY_K){}
                 else
                 {
-                    if (ats_key_code == ATS_KEY_B2)
-                        key_oer = ATS_KEY_A1;
+                    if (ats_key_code == ATS_KEY_A1)
+                        key_oer = ATS_KEY_B2;
                     else
                         key_oer = ats_key_code;
                     g_detailmodules[i].atsKeyDown(key_oer);

@@ -44,9 +44,14 @@ public:
 	bool g_jsc6; //JR乗降促進放送
 	bool g_jsc7; //小田急乗降促進放送
 	bool g_jsc8; //東葉乗降促進放送
-	bool g_mon;//モニタ操作音
-	bool g_openon;//回生開放オン
-	bool g_openoff;//回生開放オフ
+	bool g_jsc_off; //促進放送切
+	bool g_mon; //モニタ操作音
+	bool g_openon; //回生開放オン
+	bool g_openoff; //回生開放オフ
+	bool g_hsaon; //勾配起動オン
+	bool g_hsaoff; //勾配起動オフ
+	bool g_json; //乗降促進オン
+	bool g_jsoff; //乗降促進オフ
 //条件指定用パネル
 	int p92;
 	int p72;
@@ -84,6 +89,7 @@ public:
 	int outputBrake;//出力ブレーキ
 	int dispNotch;//表示ノッチ
 	int dispBrake;//表示ブレーキ
+	int dispSm;//表示速度
 	bool UsaoDisable;//うさプラの出力切断
 	bool ATSFlag;
 	bool flag;
@@ -92,16 +98,20 @@ public:
 	int direction;
 	int direction89;
 	int Ekey;
+	int _2key;
+	int Skey;
 	int Eats; //ATS種類変更
 	bool Open_nfb; //回生開放
 	int UseOpen; //回生開放を使用するか
 	int Snow3; //B1抑速
 	int Lag; //メーターラグ秒数[ms]
+	int SmLag; //メーターラグ秒数[ms]
 	int RpbNotch; //転動防止段数
 	int UseHsa; //勾配起動を使用するか
 	int HsaNotch; //勾配起動段数
 	int MonType; //モニターのタイプ
 	bool Hsa3; //Sキーの読み込み状況
+	int ElecBrk;
 //TraA
 	bool ats10;
 	bool ats24;
@@ -217,6 +227,7 @@ public:
 	{
 		p234 = stnum;
 		m_notchtimer = 0;
+		m_smtimer = 0;
 	}
 
 	//1番目のプラグインの前
@@ -324,9 +335,9 @@ public:
 		ats230 = panel[121];
 		ats231 = panel[122];
 		ats233 = panel[123];
-		ats242 = panel[83];
-		ats243 = panel[84];
-		ats244 = panel[85];
+		ats242 = panel[85];
+		ats243 = panel[83];
+		ats244 = panel[84];
 		ats207[0] = panel[82];
 
 		//パネル入力（条件比較）
@@ -379,8 +390,8 @@ public:
 		panel[178] = ats35;
 		panel[179] = ats40;
 		panel[180] = ats67;
-		panel[207] = ats71;
-		panel[208] = ats80;
+		panel[183] = ats71;
+		panel[184] = ats80;
 		panel[83] = ats83;
 		panel[84] = ats84;
 		panel[85] = ats85;
@@ -399,7 +410,7 @@ public:
 		//panel[127] = ats127;
 		panel[4] = ats128;
 		//panel[129] = ats129;
-		panel[209] = ats130;
+		panel[194] = ats130;
 		//panel[136] = ats136;
 		//panel[138] = ats138;
 		panel[139] = ats139;
@@ -567,9 +578,7 @@ public:
 		panel[166] = p166;//モニタ
 		panel[170] = !Open_nfb ? 0 : p160A;//回生開放
 		//パネル出力（うさプラ代替機能）
-		panel[52] = g_current < 0 && g_speed > 4.99f ? 1 : 0;
-		panel[53] = g_current < 0 && g_speed > 22.99f ? 1 : 0;
-		panel[54] = g_current < 0 && g_speed > 19.99f ? 1 : 0;
+		panel[52] = g_current < 0 && g_speed >(float)ElecBrk - 0.01f ? 1 : 0;
 
 		// サウンド出力
 		//乗降促進
@@ -732,6 +741,16 @@ public:
 		{
 			sound[58] = ATS_SOUND_CONTINUE;
 		}
+		if (g_jsc_off == true)
+		{
+			g_jsc_off = false;
+			sound[34] = ATS_SOUND_STOP;
+			sound[63] = ATS_SOUND_STOP;
+			sound[66] = ATS_SOUND_STOP;
+			sound[74] = ATS_SOUND_STOP;
+			sound[60] = ATS_SOUND_STOP;
+			sound[58] = ATS_SOUND_STOP;
+		}
 
 		//回生開放
 		if (g_openon == true)
@@ -748,7 +767,36 @@ public:
 		}
 		else
 			sound[16] = ATS_SOUND_CONTINUE;
-
+		//乗降促進
+		if (g_json)
+		{
+			sound[38] = ATS_SOUND_PLAY;
+			g_json = false;
+		}
+		else
+			sound[38] = ATS_SOUND_CONTINUE;
+		if (g_jsoff)
+		{
+			sound[39] = ATS_SOUND_PLAY;
+			g_jsoff = false;
+		}
+		else
+			sound[39] = ATS_SOUND_CONTINUE;
+		//勾配起動
+		if (g_hsaon)
+		{
+			sound[36] = ATS_SOUND_PLAY;
+			g_hsaon = false;
+		}
+		else
+			sound[36] = ATS_SOUND_CONTINUE;
+		if (g_hsaoff)
+		{
+			sound[37] = ATS_SOUND_PLAY;
+			g_hsaoff = false;
+		}
+		else
+			sound[37] = ATS_SOUND_CONTINUE;
 
 		/*g_js1a = ATS_SOUND_STOP;
 		g_js1b = ATS_SOUND_STOP;
@@ -789,12 +837,12 @@ public:
 		//モニタ切替音を鳴らす
 		if (g_mon == true)
 		{
-			sound[38] = ATS_SOUND_PLAY;
+			sound[47] = ATS_SOUND_PLAY;
 			g_mon = false;
 		}
 		else
 		{
-			sound[38] = ATS_SOUND_CONTINUE;
+			sound[47] = ATS_SOUND_CONTINUE;
 		}
 		//小田急キーでない時spp音を切る
 		if (p92 != 7) {
@@ -809,6 +857,21 @@ public:
 		}
 	}
 
+	//速度計
+	void Speed(int* panel, int p171)
+	{
+		if (g_time > m_smtimer)
+		{
+			dispSm = p171;
+			//次の目標時間を設定
+			m_smtimer = SmLag == -1 ? g_time + 200 + (g_time % 50) * 5 : g_time + SmLag;
+		}
+		panel[171] = dispSm;
+		panel[53] = dispSm / 100;
+		panel[54] = (dispSm % 100) / 10;
+		panel[55] = dispSm % 10;
+	}
+
 	//ノッチ表示灯
 	void Notch(int* panel, int outB, int outP)
 	{
@@ -821,7 +884,6 @@ public:
 			m_notchtimer = Lag == -1 ? g_time + 200 + (g_time % 50) * 5 : g_time + Lag;
 		}
 		panel[51] = dispBrake == g_emgBrake ? 9 : dispBrake;
-		panel[55] = dispBrake;
 		panel[57] = dispBrake;
 		panel[66] = dispNotch;
 	}
@@ -866,32 +928,38 @@ public:
 	
 	void KeyDown(int atsKeyCode)
 	{
-		if (atsKeyCode == ATS_KEY_D && g_speed == 0)//乗降促進
+		if (atsKeyCode == ATS_KEY_D)//乗降促進
 		{
-			if (p92 == 1 && direction == 1)
-				g_js1a = true;
-			else if (p92 == 1 && direction == 0)
-				g_js1b = true;
-			else if (p92 == 2)
-				g_js2 = true;
-			else if (p92 == 3 && direction == 1)
-				g_js3a = true;
-			else if (p92 == 3 && direction == 0)
-				g_js3b = true;
-			else if (p92 == 4)
-				g_js4 = true;
-			else if (p92 == 5)
-				g_js5 = true;
-			else if (p92 == 6 && direction == 1)
-				g_js6a = true;
-			else if (p92 == 6 && direction == 0)
-				g_js6b = true;
-			else if (p92 == 7)
-				g_js7 = true;
-			else if (p92 == 8)
-				g_js8 = true;
-			else
-				g_js1a = true;
+			if (_2key == 0)//前フレでOFFの際に実行
+				g_json = true;
+			_2key = 1;
+			if (g_speed == 0) {
+				g_jsc_off = true;
+				if (p92 == 1 && direction == 1)//メトロA線
+					g_js1a = true;
+				else if (p92 == 1 && direction == 0)//メトロB線
+					g_js1b = true;
+				else if (p92 == 2)//東武
+					g_js2 = true;
+				else if (p92 == 3 && direction == 1)//東急下り
+					g_js3a = true;
+				else if (p92 == 3 && direction == 0)//東急上り
+					g_js3b = true;
+				else if (p92 == 4)//西武
+					g_js4 = true;
+				else if (p92 == 5)//相鉄
+					g_js5 = true;
+				else if (p92 == 6 && direction == 1)//JR北行・東行
+					g_js6a = true;
+				else if (p92 == 6 && direction == 0)//JR南行・西行
+					g_js6b = true;
+				else if (p92 == 7)//小田急
+					g_js7 = true;
+				else if (p92 == 8)//東葉
+					g_js8 = true;
+				else
+					g_js1a = true;
+			}
 		}
 		if (atsKeyCode == ATS_KEY_E && g_handles[0].Brake >= 4 && g_handles[0].Power == 0 && UseOpen == 1)//回生開放
 		{
@@ -905,13 +973,20 @@ public:
 			}
 		}
 		if (atsKeyCode == ATS_KEY_S)//勾配起動
+		{
 			Hsa3 = true;
+			if(Skey == 0)//前フレでOFFの際に実行
+				g_hsaon = true;
+			Skey = 1;
+		}
 	}
 
 	void KeyUp(int hornType)
 	{
-		if (hornType == ATS_KEY_D)
+		if (hornType == ATS_KEY_D)//乗降促進
 		{
+			_2key = 0;
+			g_jsoff = true;
 			g_js1a = false;
 			g_js1b = false;
 			g_js2 = false;
@@ -944,8 +1019,12 @@ public:
 					g_jsc1 = true;
 			}
 		}
-		if (hornType == ATS_KEY_S)
+		if (hornType == ATS_KEY_S)//勾配起動
+		{
 			Hsa3 = false;
+			g_hsaoff = true;
+			Skey = 0;
+		}
 	}
 
 
@@ -976,4 +1055,5 @@ public:
 	}
 private:
 	int m_notchtimer; //ノッチ表示灯タイマー
+	int m_smtimer; //速度計タイマー
 };
