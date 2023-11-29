@@ -102,6 +102,7 @@ public:
 	int Skey;
 	int Eats; //ATS種類変更
 	bool Open_nfb; //回生開放
+//設定
 	int UseOpen; //回生開放を使用するか
 	int Snow3; //B1抑速
 	int Lag; //メーターラグ秒数[ms]
@@ -113,7 +114,7 @@ public:
 	bool Hsa3; //Sキーの読み込み状況
 	int ElecBrk;
 //TraA
-	bool ats10;
+	//bool ats10;
 	bool ats24;
 	int ats35;
 	int ats40;
@@ -127,7 +128,7 @@ public:
 	//int ats88;
 	//int ats89;
 	//int ats90;
-	int ats93;
+	//int ats93;
 	//bool ats94;
 	//bool ats95;
 	//bool ats97;
@@ -153,13 +154,13 @@ public:
 	int ats148;
 	int ats149;
 	int ats150;
-	int ats170;
-	int ats178;
-	int ats179;
-	int ats180;
-	int ats183;
-	int ats184;
-	int ats26;
+	//int ats170;
+	//int ats178;
+	//int ats179;
+	//int ats180;
+	//int ats183;
+	//int ats184;
+	//int ats26;
 	int ats242;
 	int ats243;
 	int ats244;
@@ -176,6 +177,7 @@ public:
 	int ats207[3];
 	int ats208;
 	int ats209;
+	/*
 	int ats215;
 	int ats216;
 	int ats217;
@@ -194,6 +196,9 @@ public:
 	int ats230;
 	int ats231;
 	int ats233;
+	*/
+	int Distance[7];
+	int AMMeter[18];
 	bool ats255;
 	int s21;
 	int s23;
@@ -210,7 +215,7 @@ public:
 	int oerRev;
 	int extRev;
 
-	int ats213;
+	//int ats213;
 
 	MIni p_ini;
 
@@ -235,7 +240,7 @@ public:
 	{
 		if (g_pilotlamp)//戸閉時は回生非開放時はレバーサ位置を返す
 		{
-			if ((panel[14] == 0 || panel[14] == 1) && ats213 == 0 && oerRev == 0)//レバーサ前、後ろ、回生開放不使用、かつ中立時
+			if ((panel[14] == 0 || panel[14] == 1)  && oerRev == 0)//レバーサ前、後ろ、回生開放不使用、かつ中立時
 			{
 				if (panel[14] == 0) {//前なら
 					extRev = 1;
@@ -267,7 +272,7 @@ public:
 		//ats97 = panel[40];
 		//ats95 = panel[12];
 		//ats94 = panel[11];
-		ats93 = panel[172];
+		//ats93 = panel[172];
 		//ats90 = panel[37];
 		//ats89 = panel[36];
 		//ats88 = panel[35];
@@ -281,7 +286,7 @@ public:
 		ats40 = panel[51];
 		ats35 = panel[50];
 		ats24 = panel[8];
-		ats10 = panel[10];
+		//ats10 = panel[10];
 		//ats126 = panel[43];
 		//ats127 = panel[43];
 		ats128 = panel[2];
@@ -301,13 +306,13 @@ public:
 		ats148 = panel[88];
 		//ats149 = panel[89];
 		//ats150 = panel[90];
-		ats170 = panel[181];
-		ats178 = panel[177];
-		ats179 = panel[178];
-		ats180 = panel[179];
-		ats26 = panel[180];
-		ats183 = panel[175];
-		ats184 = panel[176];
+		//ats170 = panel[181];
+		//ats178 = panel[177];
+		//ats179 = panel[178];
+		//ats180 = panel[179];
+		//ats26 = panel[180];
+		//ats183 = panel[175];
+		//ats184 = panel[176];
 		ats195 = panel[100];
 		ats196 = panel[101];
 		ats197 = panel[102];
@@ -317,6 +322,16 @@ public:
 		ats207[2] = panel[15];
 		ats207[1] = panel[16];
 		ats209 = panel[17];
+
+		for (int i = 0; i < 7; ++i)
+		{
+			Distance[i] = panel[175 + i];
+		}
+		for (int i = 0; i < 18; ++i)
+		{
+			AMMeter[i] = panel[106 + i];
+		}
+		/*
 		ats215 = panel[106];
 		ats216 = panel[107];
 		ats217 = panel[108];
@@ -335,6 +350,7 @@ public:
 		ats230 = panel[121];
 		ats231 = panel[122];
 		ats233 = panel[123];
+		*/
 		ats242 = panel[85];
 		ats243 = panel[83];
 		ats244 = panel[84];
@@ -385,7 +401,7 @@ public:
 	void ElapseB(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
 	{
 		// パネル出力
-		panel[10] = ats10;
+		panel[10] = ats128;
 		panel[8] = ats24;
 		panel[178] = ats35;
 		panel[179] = ats40;
@@ -399,7 +415,7 @@ public:
 		//panel[88] = ats88;
 		//panel[89] = ats89;
 		//panel[90] = ats90;
-		panel[93] = ats93;
+		//panel[93] = ats93;
 		//panel[94] = ats94;
 		//panel[95] = ats95;
 		//panel[97] = ats97;
@@ -408,7 +424,7 @@ public:
 		//panel[100] = ats100;
 		//panel[126] = ats126;
 		//panel[127] = ats127;
-		panel[4] = ats128;
+		//panel[4] = ats128;
 		//panel[129] = ats129;
 		panel[194] = ats130;
 		//panel[136] = ats136;
@@ -425,9 +441,9 @@ public:
 		panel[148] = ats148;
 		panel[149] = ats149;
 		panel[150] = ats150;
-		panel[13] = ats178;
-		panel[14] = ats179;
-		panel[15] = ats180;
+		panel[13] = Distance[2];
+		panel[14] = Distance[3];
+		panel[15] = Distance[4];
 		panel[195] = ats195;
 		panel[196] = ats196;
 		panel[197] = ats197;
@@ -437,6 +453,7 @@ public:
 		//panel[207] = ats207;
 		//panel[208] = ats208;
 		panel[213] = ats209;
+		/*
 		panel[215] = ats215;
 		panel[216] = ats216;
 		panel[217] = ats217;
@@ -455,6 +472,12 @@ public:
 		panel[230] = ats230;
 		panel[231] = ats231;
 		panel[233] = ats233;
+		*/
+		for (int i = 0; i < 17; ++i)
+		{
+			panel[215 + i] = AMMeter[i];
+		}
+		panel[233] = AMMeter[17];
 		panel[242] = ats242;
 		panel[243] = ats243;
 		panel[244] = ats244;
@@ -570,10 +593,10 @@ public:
 		panel[176] = p176 == 0 ? 0 : p160A;//耐雪ブレーキ　マスコンキーごとに値変化
 		panel[234] = p160 == 7 ? p234 % 100 : 0;//次の停車駅表示は小田急キーの時のみ
 		//Index重複があるもの
-		panel[24] = ats183;
-		panel[25] = ats184;
-		panel[26] = ats26;
-		panel[28] = ats170;
+		panel[24] = Distance[0];
+		panel[25] = Distance[1];
+		panel[26] = Distance[5];
+		panel[28] = Distance[6];
 		//以下独自仕様
 		panel[166] = p166;//モニタ
 		panel[170] = !Open_nfb ? 0 : p160A;//回生開放
