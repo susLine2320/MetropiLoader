@@ -80,6 +80,7 @@ public:
 	int p166;
 	int p176;
 	int p234;
+	int p251;
 //変数
 	int oerNotch;//小田急PIの出力P
 	int oerBrake;//小田急PIの出力B
@@ -95,6 +96,7 @@ public:
 	bool flag;
 	bool power;
 	int stnum;//駅番号（小田急）
+	bool Spp;//「停車」
 	int direction;
 	int direction89;
 	int Ekey;
@@ -148,8 +150,8 @@ public:
 	//int ats142;
 	//int ats143;
 	int ats144;
-	int ats145;
-	int ats146;
+	//int ats145;
+	//int ats146;
 	int ats147;
 	int ats148;
 	int ats149;
@@ -174,9 +176,9 @@ public:
 	int ats198;
 	int ats199;
 	int ats200;
-	int ats207[3];
+	int Sppsta[5];
 	int ats208;
-	int ats209;
+	//int ats209;
 	/*
 	int ats215;
 	int ats216;
@@ -300,8 +302,8 @@ public:
 		//ats142 = panel[134];
 		//ats143 = panel[135];
 		ats144 = panel[79];
-		ats145 = panel[80];
-		ats146 = panel[81];
+		Sppsta[3] = panel[80];
+		Sppsta[4] = panel[81];
 		ats147 = panel[87];
 		ats148 = panel[88];
 		//ats149 = panel[89];
@@ -319,9 +321,9 @@ public:
 		ats198 = panel[103];
 		ats199 = panel[104];
 		ats200 = panel[105];
-		ats207[2] = panel[15];
-		ats207[1] = panel[16];
-		ats209 = panel[17];
+		Sppsta[2] = panel[15];
+		Sppsta[1] = panel[16];
+		Sppsta[0] = panel[17];
 
 		for (int i = 0; i < 7; ++i)
 		{
@@ -354,7 +356,7 @@ public:
 		ats242 = panel[85];
 		ats243 = panel[83];
 		ats244 = panel[84];
-		ats207[0] = panel[82];
+		//ats207[0] = panel[82];
 
 		//パネル入力（条件比較）
 		p4 = panel[4];
@@ -435,8 +437,8 @@ public:
 		//panel[142] = ats142;
 		//panel[143] = ats143;
 		panel[144] = ats144;
-		panel[145] = ats145;
-		panel[146] = ats146;
+		panel[145] = Sppsta[3];
+		panel[146] = Sppsta[4];
 		panel[147] = ats147;
 		panel[148] = ats148;
 		panel[149] = ats149;
@@ -452,7 +454,7 @@ public:
 		panel[200] = ats200;
 		//panel[207] = ats207;
 		//panel[208] = ats208;
-		panel[213] = ats209;
+		panel[213] = Sppsta[0];
 		/*
 		panel[215] = ats215;
 		panel[216] = ats216;
@@ -481,7 +483,8 @@ public:
 		panel[242] = ats242;
 		panel[243] = ats243;
 		panel[244] = ats244;
-		panel[255] = ats207[MonType];
+		panel[255] = Sppsta[2];
+		panel[137] = Sppsta[1];
 
 		// サウンド出力（変換）
 		sound[21] = s21;
@@ -525,6 +528,7 @@ public:
  		p160 = panel[160];
 		p160A = p160 == 0 ? 9 : p160;//マスコンキー0は9
 		p176 = panel[176];
+		p251 = panel[251];
 
 		//ハンドル出力
 		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
@@ -592,6 +596,7 @@ public:
 		panel[143] = p143;
 		panel[176] = p176 == 0 ? 0 : p160A;//耐雪ブレーキ　マスコンキーごとに値変化
 		panel[234] = p160 == 7 ? p234 % 100 : 0;//次の停車駅表示は小田急キーの時のみ
+		panel[251] = Spp == true ? (g_time % 1000) / 500 : p251; //小田急停通と営団・東急停通を合成
 		//Index重複があるもの
 		panel[24] = Distance[0];
 		panel[25] = Distance[1];
@@ -890,8 +895,8 @@ public:
 			m_smtimer = SmLag == -1 ? g_time + 200 + (g_time % 50) * 5 : g_time + SmLag;
 		}
 		panel[171] = dispSm;
-		panel[53] = dispSm / 100;
-		panel[54] = (dispSm % 100) / 10;
+		panel[53] = dispSm < 100 ? 10 : dispSm / 100;
+		panel[54] = dispSm < 10 ? 10 : (dispSm % 100) / 10;
 		panel[55] = dispSm % 10;
 	}
 
@@ -1054,6 +1059,7 @@ public:
 	void DoorOpen()//ドアが開くときに次の停車駅を代入する
 	{
 		p234 = stnum;
+		Spp = false;
 	}
 
 	void DoorClose()
@@ -1062,6 +1068,9 @@ public:
 
 	void SetBeaconData(ATS_BEACONDATA beaconData)
 	{
+		if (beaconData.Type == 55 && g_speed != 0.0f) {//停通予告
+			Spp = true;
+		}
 		if (beaconData.Type == 70) {//次の停車駅を取得
 			stnum = beaconData.Optional;
 		}
