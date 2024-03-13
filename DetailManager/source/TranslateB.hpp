@@ -268,17 +268,6 @@ public:
 			}
 		}
 		// パネル入力（変換）
-		//ats100 = panel[43];
-		//ats99 = panel[42];
-		//ats98 = panel[41];
-		//ats97 = panel[40];
-		//ats95 = panel[12];
-		//ats94 = panel[11];
-		//ats93 = panel[172];
-		//ats90 = panel[37];
-		//ats89 = panel[36];
-		//ats88 = panel[35];
-		//ats87 = panel[34];
 		ats85 = panel[33];
 		ats84 = panel[32];
 		ats83 = panel[31];
@@ -288,33 +277,14 @@ public:
 		ats40 = panel[51];
 		ats35 = panel[50];
 		ats24 = panel[8];
-		//ats10 = panel[10];
-		//ats126 = panel[43];
-		//ats127 = panel[43];
 		ats128 = panel[2];
-		//ats129 = panel[59];
 		ats130 = panel[55];
-		//ats136 = panel[130];
-		//ats138 = panel[131];
 		ats139 = panel[20];
-		//ats140 = panel[132];
-		//ats141 = panel[133];
-		//ats142 = panel[134];
-		//ats143 = panel[135];
 		ats144 = panel[79];
 		Sppsta[3] = panel[80];
 		Sppsta[4] = panel[81];
 		ats147 = panel[87];
 		ats148 = panel[88];
-		//ats149 = panel[89];
-		//ats150 = panel[90];
-		//ats170 = panel[181];
-		//ats178 = panel[177];
-		//ats179 = panel[178];
-		//ats180 = panel[179];
-		//ats26 = panel[180];
-		//ats183 = panel[175];
-		//ats184 = panel[176];
 		ats195 = panel[100];
 		ats196 = panel[101];
 		ats197 = panel[102];
@@ -333,30 +303,9 @@ public:
 		{
 			AMMeter[i] = panel[106 + i];
 		}
-		/*
-		ats215 = panel[106];
-		ats216 = panel[107];
-		ats217 = panel[108];
-		ats218 = panel[109];
-		ats219 = panel[110];
-		ats220 = panel[111];
-		ats221 = panel[112];
-		ats222 = panel[113];
-		ats223 = panel[114];
-		ats224 = panel[115];
-		ats225 = panel[116];
-		ats226 = panel[117];
-		ats227 = panel[118];
-		ats228 = panel[119];
-		ats229 = panel[120];
-		ats230 = panel[121];
-		ats231 = panel[122];
-		ats233 = panel[123];
-		*/
 		ats242 = panel[85];
 		ats243 = panel[83];
 		ats244 = panel[84];
-		//ats207[0] = panel[82];
 
 		//パネル入力（条件比較）
 		p4 = panel[4];
@@ -413,29 +362,8 @@ public:
 		panel[83] = ats83;
 		panel[84] = ats84;
 		panel[85] = ats85;
-		//panel[87] = ats87;
-		//panel[88] = ats88;
-		//panel[89] = ats89;
-		//panel[90] = ats90;
-		//panel[93] = ats93;
-		//panel[94] = ats94;
-		//panel[95] = ats95;
-		//panel[97] = ats97;
-		//panel[98] = ats98;
-		//panel[99] = ats99;
-		//panel[100] = ats100;
-		//panel[126] = ats126;
-		//panel[127] = ats127;
-		//panel[4] = ats128;
-		//panel[129] = ats129;
 		panel[194] = ats130;
-		//panel[136] = ats136;
-		//panel[138] = ats138;
 		panel[139] = ats139;
-		//panel[140] = ats140;
-		//panel[141] = ats141;
-		//panel[142] = ats142;
-		//panel[143] = ats143;
 		panel[144] = ats144;
 		panel[145] = Sppsta[3];
 		panel[146] = Sppsta[4];
@@ -452,29 +380,7 @@ public:
 		panel[198] = ats198;
 		panel[199] = ats199;
 		panel[200] = ats200;
-		//panel[207] = ats207;
-		//panel[208] = ats208;
 		panel[213] = Sppsta[0];
-		/*
-		panel[215] = ats215;
-		panel[216] = ats216;
-		panel[217] = ats217;
-		panel[218] = ats218;
-		panel[219] = ats219;
-		panel[220] = ats220;
-		panel[221] = ats221;
-		panel[222] = ats222;
-		panel[223] = ats223;
-		panel[224] = ats224;
-		panel[225] = ats225;
-		panel[226] = ats226;
-		panel[227] = ats227;
-		panel[228] = ats228;
-		panel[229] = ats229;
-		panel[230] = ats230;
-		panel[231] = ats231;
-		panel[233] = ats233;
-		*/
 		for (int i = 0; i < 17; ++i)
 		{
 			panel[215 + i] = AMMeter[i];
@@ -488,7 +394,6 @@ public:
 
 		// サウンド出力（変換）
 		sound[21] = s21;
-		//sound[23] = s23;
 		sound[25] = s25;
 		sound[26] = s26;
 		sound[54] = s54;
@@ -497,7 +402,6 @@ public:
 		sound[68] = s68;
 		sound[46] = s46;
 		sound[115] = s115;
-		//sound[89] = s89;
 	}
 
 	void ElapseC(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
@@ -505,26 +409,11 @@ public:
 		//パネル入力
 		p92 = panel[92];
 		p72 = panel[72];
-		//p4 = panel[4];
 		p19 = panel[19];
 		p20 = panel[20];
 		p36 = panel[36];
 		p37 = panel[37];
 		p38 = panel[38];
-		//p39 = panel[39];
-		//p94 = panel[94];
-		//p95 = panel[95];
-		//p97 = panel[97];
-		//p98 = panel[98];
-		//p99 = panel[99];
-		//p100 = panel[127];
-		//p136 = panel[136];
-		//p137 = panel[137];
-		//p138 = panel[138];
-		//p140 = panel[140];
-		//p141 = panel[141];
-		//p142 = panel[142];
-		//p143 = panel[143];
  		p160 = panel[160];
 		p160A = p160 == 0 ? 9 : p160;//マスコンキー0は9
 		p176 = panel[176];
