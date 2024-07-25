@@ -52,6 +52,8 @@ public:
 	bool g_hsaoff; //勾配起動オフ
 	bool g_json; //乗降促進オン
 	bool g_jsoff; //乗降促進オフ
+	bool g_highon; //ハイビームオン
+	bool g_highoff; //ハイビームオフ
 //条件指定用パネル
 	int p92;
 	int p72;
@@ -104,6 +106,7 @@ public:
 	int Skey;
 	int Eats; //ATS種類変更
 	bool Open_nfb; //回生開放
+	bool HighBeam; //ハイビーム
 //設定
 	int UseOpen; //回生開放を使用するか
 	int Snow3; //B1抑速
@@ -115,6 +118,13 @@ public:
 	int MonType; //モニターのタイプ
 	bool Hsa3; //Sキーの読み込み状況
 	int ElecBrk;
+	//autopilot関連
+	int sk_tascon;
+	int sk_tascmonitor;
+	int sk_tascbrake;
+	int e_tascon;
+	int e_tascmonitor;
+	int e_tascbrake;
 //TraA
 	//bool ats10;
 	bool ats24;
@@ -154,8 +164,8 @@ public:
 	//int ats146;
 	int ats147;
 	int ats148;
-	int ats149;
-	int ats150;
+	//int ats149;
+	//int ats150;
 	//int ats170;
 	//int ats178;
 	//int ats179;
@@ -352,44 +362,48 @@ public:
 	void ElapseB(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
 	{
 		// パネル出力
-		panel[10] = ats128;
-		panel[8] = ats24;
-		panel[178] = ats35;
-		panel[179] = ats40;
-		panel[180] = ats67;
-		panel[183] = ats71;
-		panel[184] = ats80;
-		panel[83] = ats83;
-		panel[84] = ats84;
-		panel[85] = ats85;
-		panel[194] = ats130;
-		panel[139] = ats139;
-		panel[144] = ats144;
-		panel[145] = Sppsta[3];
-		panel[146] = Sppsta[4];
+		//panel[127] = ats128;
+		panel[127] = ats24;
+		panel[183] = ats35;
+		panel[184] = ats40;
+		panel[185] = ats67;
+		panel[196] = ats71;
+		panel[197] = ats80;
+		panel[142] = ats83;
+		panel[143] = ats84;
+		panel[144] = ats85;
+		panel[198] = ats130;
+		panel[128] = ats139;
+		panel[129] = ats144;
+		panel[139] = Sppsta[3];
+		panel[140] = Sppsta[4];
 		panel[147] = ats147;
 		panel[148] = ats148;
-		panel[149] = ats149;
-		panel[150] = ats150;
+		//panel[149] = ats149;
+		//panel[150] = ats150;
 		panel[13] = Distance[2];
 		panel[14] = Distance[3];
 		panel[15] = Distance[4];
+		/*
 		panel[195] = ats195;
 		panel[196] = ats196;
 		panel[197] = ats197;
 		panel[198] = ats198;
 		panel[199] = ats199;
 		panel[200] = ats200;
-		panel[213] = Sppsta[0];
-		for (int i = 0; i < 17; ++i)
+		*/
+		panel[138] = Sppsta[0];
+		panel[213] = AMMeter[0];
+		for (int i = 2; i < 17; ++i)
 		{
-			panel[215 + i] = AMMeter[i];
+			panel[215 + i] = AMMeter[i - 1];
 		}
-		panel[233] = AMMeter[17];
+		panel[233] = AMMeter[16];
+		panel[234] = AMMeter[17];
 		panel[242] = ats242;
 		panel[243] = ats243;
 		panel[244] = ats244;
-		panel[255] = Sppsta[2];
+		panel[136] = Sppsta[2];
 		panel[137] = Sppsta[1];
 
 		// サウンド出力（変換）
@@ -422,20 +436,20 @@ public:
 		//ハンドル出力
 		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
 		{
-			outputBrake = oerBrake; //小田急PIからの出力Bを使用
+			outputBrake = !g_pilotlamp ? max(oerBrake, min(RpbNotch, g_svcBrake)) : oerBrake; //小田急PIからの出力Bを使用
 			outputNotch = oerNotch; //小田急PIからの出力Pを使用
 			sound[0] = ATS_SOUND_STOP; //ATSベルをストップ
 		}
 		else if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 0)//OM-ATS
 		{
-			outputBrake = max(tmBrake, oerBrake); //うさプラ・小田急PIからの出力Bを使用
+			outputBrake = !g_pilotlamp ? max(min(RpbNotch, g_svcBrake), max(tmBrake, oerBrake)) : max(tmBrake, oerBrake); //うさプラ・小田急PIからの出力Bを使用
 			outputNotch = min(tmNotch, oerNotch); //うさプラ・小田急PIからの出力Pを使用
 			sound[21] = ATS_SOUND_STOP;
 			//ATSベルは有効
 		}
 		else
 		{
-			outputBrake = panel[139] >= 1 ? max(tmBrake, min(RpbNotch, g_svcBrake)) : tmBrake; //うさプラからの出力Bを使用
+			outputBrake = !g_pilotlamp ? max(tmBrake, min(RpbNotch, g_svcBrake)) : tmBrake; //うさプラからの出力Bを使用
 			outputNotch = tmNotch; //うさプラからの出力Pを使用
 			sound[25] = ATS_SOUND_STOP; //ATSベルをストップ
 			sound[21] = ATS_SOUND_STOP; //ATSベルをストップ
@@ -463,6 +477,7 @@ public:
 		p141 = power == 1 && p141 >= 1 ? p141 : 0;//TASCブレーキ
 		p142 = power == 1 && p142 < 10 ? p142: 10;//TASCブレーキ
 		p143 = power == 1 && p143 < 10 ? p143 : 10;//TASCブレーキ
+		if (p92 == 0) { HighBeam = false; }
 		//パネル出力（うさプラ統合）
 		panel[22] = (bool)panel[22] == false && (bool)panel[25] == false ? 0 : p160A;//ATC非常
 		panel[23] = (bool)panel[23] == false && (bool)panel[26] == false ? 0 : p160A;//ATC常用
@@ -476,26 +491,21 @@ public:
 		panel[35] = p98;//D-ATS-P電源
 		panel[33] = p99;//無信号
 		panel[40] = p100;//パターン接近
-		panel[136] = p136;//TASC電源
-		panel[137] = p19 == 1 && p137 == 1 ? 1 : 0;//ATO電源　ATC投入が前提（ATSでは作動しない）
-		panel[138] = p138;//TASC制御
-		panel[140] = p140;
-		panel[141] = p141;
-		panel[142] = p142;
-		panel[143] = p143;
+		panel[18] = HighBeam == 0 ? 0 : p160A; //ハイビーム
 		panel[176] = p176 == 0 ? 0 : p160A;//耐雪ブレーキ　マスコンキーごとに値変化
-		panel[234] = p160 == 7 ? p234 % 100 : 0;//次の停車駅表示は小田急キーの時のみ
+		panel[141] = p160 == 7 ? p234 % 100 : 0;//次の停車駅表示は小田急キーの時のみ
 		panel[251] = Spp == true ? (g_time % 1000) / 500 : p251; //小田急停通と営団・東急停通を合成
 		//Index重複があるもの
 		panel[24] = Distance[0];
 		panel[25] = Distance[1];
-		panel[26] = Distance[5];
-		panel[28] = Distance[6];
+		//panel[26] = Distance[5];
+		//panel[28] = Distance[6];
 		//以下独自仕様
 		panel[166] = p166;//モニタ
 		panel[170] = !Open_nfb ? 0 : p160A;//回生開放
 		//パネル出力（うさプラ代替機能）
 		panel[52] = g_current < 0 && g_speed >(float)ElecBrk - 0.01f ? 1 : 0;
+		panel[128] = !g_pilotlamp && p92 != 0 ? 1 : 0;
 
 		// サウンド出力
 		//乗降促進
@@ -714,6 +724,22 @@ public:
 		}
 		else
 			sound[37] = ATS_SOUND_CONTINUE;
+		//ハイビーム
+		if (g_highon)
+		{
+			sound[48] = ATS_SOUND_PLAY;
+			g_highon = false;
+		}
+		else
+			sound[48] = ATS_SOUND_CONTINUE;
+		if (g_highoff)
+		{
+			sound[49] = ATS_SOUND_PLAY;
+			g_highoff = false;
+		}
+		else
+			sound[49] = ATS_SOUND_CONTINUE;
+
 
 		/*g_js1a = ATS_SOUND_STOP;
 		g_js1b = ATS_SOUND_STOP;
@@ -774,9 +800,16 @@ public:
 		}
 	}
 
+	void ElapseD(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
+	{
+		if (e_tascon >= 0 && sk_tascon >= 0 && p92 == 7) { panel[e_tascon] = panel[sk_tascon]; panel[sk_tascon] = 0; }//TASC電源
+		if (e_tascmonitor >= 0 && sk_tascmonitor >= 0 && p92 == 7) { panel[e_tascmonitor] = panel[sk_tascmonitor]; panel[sk_tascmonitor] = 0; }//TASC制御
+		if (e_tascbrake >= 0 && sk_tascbrake >= 0 && p92 == 7) { panel[e_tascbrake] = panel[sk_tascbrake]; panel[sk_tascbrake] = 0; }//TASCブレーキ
+	}
+
 	//速度計
 	void Speed(int* panel, int p171)
-	{
+	{/*
 		if (g_time > m_smtimer)
 		{
 			dispSm = p171;
@@ -786,12 +819,12 @@ public:
 		panel[171] = dispSm;
 		panel[53] = dispSm < 100 ? 10 : dispSm / 100;
 		panel[54] = dispSm < 10 ? 10 : (dispSm % 100) / 10;
-		panel[55] = dispSm % 10;
+		panel[55] = dispSm % 10;*/
 	}
-
+	/*
 	//ノッチ表示灯
 	void Notch(int* panel, int outB, int outP)
-	{
+	{/*
 		//所定時間経過していたら
 		if (g_time > m_notchtimer)
 		{
@@ -802,9 +835,9 @@ public:
 		}
 		panel[51] = dispBrake == g_emgBrake ? 9 : dispBrake;
 		panel[57] = dispBrake;
-		panel[66] = dispNotch;
-	}
-
+		panel[66] = dispNotch;*/
+	//}
+	
 	//回生開放
 	int Open(int Reverser, int Brake)
 	{
@@ -895,6 +928,14 @@ public:
 			if(Skey == 0)//前フレでOFFの際に実行
 				g_hsaon = true;
 			Skey = 1;
+		}
+		if (atsKeyCode == ATS_KEY_J && p92 != 0 && tmBrake != g_emgBrake)//ハイビーム
+		{
+			if (HighBeam)
+				g_highoff = true;
+			else
+				g_highon = true;
+			HighBeam = HighBeam ? false : true;
 		}
 	}
 

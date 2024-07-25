@@ -58,9 +58,7 @@ bool g_first_time;
 #include "ats_define.hpp"
 
 #include "TranslateB.hpp"
-//#include "TranslateA.hpp"
 
-//TranslateA traA;
 TranslateB traB;
 MIni p_ini;
 
@@ -129,22 +127,22 @@ void WINAPI atsLoad()
         wcscpy_s(detailmodules_txt_path, g_module_dir);
         wcscpy_s(metropiloader_ini_path, g_module_dir);
         wcscat_s(detailmodules_txt_path, L"\\detailmodules.txt");
-        wcscat_s(metropiloader_ini_path, L"\\MetropiLoader.ini");
-        
+        wcscat_s(metropiloader_ini_path, L"\\MetropiExtender.ini");
+
         ret = _wstat(detailmodules_txt_path, &buf);
         ret2 = _wstat(metropiloader_ini_path, &buf);
     }
 
     if (!ret)
     {
-        FILE *fp = NULL;
+        FILE* fp = NULL;
         _wfopen_s(&fp, detailmodules_txt_path, L"r");
 
         while (!feof(fp))
         {
             char module_path[MAX_PATH];
             wchar_t module_full_path[MAX_PATH],
-                    module_path_wcs[MAX_PATH];
+                module_path_wcs[MAX_PATH];
             size_t tmp = 0;
 
             memset(module_path, 0, sizeof(char) * MAX_PATH);
@@ -162,13 +160,13 @@ void WINAPI atsLoad()
 
             wcscpy_s(module_full_path, g_module_dir);
             mbstowcs_s(&tmp, module_path_wcs, module_path, MAX_PATH);
-//            wcscat(module_full_path, L"..\\..\\Plugin\\");
+            //            wcscat(module_full_path, L"..\\..\\Plugin\\");
             wcscat_s(module_full_path, module_path_wcs);
 
             {
                 struct _stat buf;
                 int exists;
-                
+
                 exists = _wstat(module_full_path, &buf);
 
                 if (!exists)
@@ -194,10 +192,10 @@ void WINAPI atsLoad()
 
                     memset(&g_detailmodules[g_num_of_detailmodules].last_handle, 0, sizeof(ATS_HANDLES));
 
-					if (g_detailmodules[g_num_of_detailmodules].atsLoad != NULL)
-					{
-						g_detailmodules[g_num_of_detailmodules].atsLoad();
-					}
+                    if (g_detailmodules[g_num_of_detailmodules].atsLoad != NULL)
+                    {
+                        g_detailmodules[g_num_of_detailmodules].atsLoad();
+                    }
 
                     ++g_num_of_detailmodules;
                 }
@@ -233,6 +231,12 @@ void WINAPI atsLoad()
     traB.RpbNotch = max(1, IniIntGet(L"Emulate", L"RpbNotch", 4, metropiloader_ini_path));//0à»è„ÇÃêî
     traB.UseHsa = max(min(IniIntGet(L"Emulate", L"UseHsa", 0, metropiloader_ini_path), 1), 0);//0à»è„ÇÃêî
     traB.HsaNotch = max(1, IniIntGet(L"Emulate", L"HsaNotch", 3, metropiloader_ini_path));//0à»è„ÇÃêî
+    traB.sk_tascon = IniIntGet(L"Tasc", L"tascenabled", -1, metropiloader_ini_path);
+    traB.sk_tascmonitor = IniIntGet(L"Tasc", L"tascmonitor", -1, metropiloader_ini_path);
+    traB.sk_tascbrake = IniIntGet(L"Tasc", L"tascbrake", -1, metropiloader_ini_path);
+    traB.e_tascon = IniIntGet(L"Tasc", L"tascenablede", -1, metropiloader_ini_path);
+    traB.e_tascmonitor = IniIntGet(L"Tasc", L"tascmonitore", -1, metropiloader_ini_path);
+    traB.e_tascbrake = IniIntGet(L"Tasc", L"tascbrakee", -1, metropiloader_ini_path);
 }
 
 // Called when this plug-in is unloaded
@@ -282,7 +286,14 @@ void WINAPI atsInitialize(int param)
 
     if (distRef.Type == 53)
     {
-        g_detailmodules[0].atsSetBeaconData(distRef);
+        //g_detailmodules[0].atsSetBeaconData(distRef);
+        for (int i = 0; i < g_num_of_detailmodules; ++i)
+        {
+            if (g_detailmodules[i].atsSetBeaconData != NULL)
+            {
+                g_detailmodules[i].atsSetBeaconData(distRef);
+            }
+        }
         distRef.Type = 256;
     }
 
@@ -433,16 +444,18 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
 
                 ret.Brake = traB.outputBrake;
                 ret.Power = traB.outputNotch;
-                traB.Speed(p_panel, p_panel[171]);
+                //traB.Speed(p_panel, p_panel[171]);
             }
             if (i == p_ini.Snow2 && p_ini.Snow == 1)
             {
                 ret.Brake = traB.Snow(ret.Brake);
             }
+            /*
             if (i == p_ini.Notch)
             {
                 traB.Notch(p_panel, ret.Brake, ret.Power);
             }
+            */
             if (i == p_ini.Open2)
             {
                 ret.Reverser = traB.Open(ret.Reverser, ret.Brake);
@@ -451,7 +464,12 @@ ATS_HANDLES WINAPI atsElapse(ATS_VEHICLESTATE vs, int *p_panel, int *p_sound)
             {
                 ret.Brake = traB.Hsa(ret.Brake);
             }
+            if (i == g_num_of_detailmodules - 1)
+            {
+                traB.ElapseD(vs, p_panel, p_sound);
+            }
         }
+
     }
     else//PIÇì«Ç›çûÇÒÇ≈Ç¢Ç»Ç¢èÍçá
     {
