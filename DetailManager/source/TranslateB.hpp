@@ -211,6 +211,7 @@ public:
 	*/
 	int Distance[7];
 	int AMMeter[18];
+	int BCMRMeter[7];
 	bool ats255;
 	int s21;
 	int s23;
@@ -313,6 +314,10 @@ public:
 		{
 			AMMeter[i] = panel[106 + i];
 		}
+		for (int i = 0; i < 7; ++i)
+		{
+			BCMRMeter[i] = panel[185 + i];
+		}
 		ats242 = panel[85];
 		ats243 = panel[83];
 		ats244 = panel[84];
@@ -405,6 +410,13 @@ public:
 		panel[244] = ats244;
 		panel[136] = Sppsta[2];
 		panel[137] = Sppsta[1];
+		panel[87] = BCMRMeter[0];
+		panel[88] = BCMRMeter[1];
+		panel[89] = BCMRMeter[2];
+		panel[90] = BCMRMeter[3];
+		panel[97] = BCMRMeter[4];
+		panel[98] = BCMRMeter[5];
+		panel[99] = BCMRMeter[6];
 
 		// サウンド出力（変換）
 		sound[21] = s21;
