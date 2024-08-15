@@ -1017,10 +1017,9 @@ public:
 			stnum = beaconData.Optional;
 		}
 		if (beaconData.Type == 89) {//運転方向を取得（本仕様）
-			direction89 = 1;
 			direction = beaconData.Optional % 2;
 		}
-		if (beaconData.Type == 19 && direction89 == 2) {//運転方向を取得（バックアップ）
+		if (beaconData.Type == 19) {//運転方向を取得（バックアップ）
 			direction = beaconData.Optional % 2;
 		}
 		if (beaconData.Type == 100) {
