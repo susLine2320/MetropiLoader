@@ -127,7 +127,7 @@ void WINAPI atsLoad()
         wcscpy_s(detailmodules_txt_path, g_module_dir);
         wcscpy_s(metropiloader_ini_path, g_module_dir);
         wcscat_s(detailmodules_txt_path, L"\\detailmodules.txt");
-        wcscat_s(metropiloader_ini_path, L"\\MetropiExtender.ini");
+        wcscat_s(metropiloader_ini_path, L"\\MetropiLoader.ini");
 
         ret = _wstat(detailmodules_txt_path, &buf);
         ret2 = _wstat(metropiloader_ini_path, &buf);
