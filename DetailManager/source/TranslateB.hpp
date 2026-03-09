@@ -446,13 +446,13 @@ public:
 		p251 = panel[251];
 
 		//ハンドル出力
-		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
+		if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 1 && panel[81] == 0)//小田急キー、CgSがATSの時で、ATC無信号時かつD-ATS-P設定
 		{
 			outputBrake = !g_pilotlamp ? max(oerBrake, min(RpbNotch, g_svcBrake)) : oerBrake; //小田急PIからの出力Bを使用
 			outputNotch = oerNotch; //小田急PIからの出力Pを使用
 			sound[0] = ATS_SOUND_STOP; //ATSベルをストップ
 		}
-		else if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 0)//OM-ATS
+		else if (p92 == 7 && p72 == 0 && panel[101] == 0 && Eats == 0 && panel[81] == 0)//OM-ATS
 		{
 			outputBrake = !g_pilotlamp ? max(min(RpbNotch, g_svcBrake), max(tmBrake, oerBrake)) : max(tmBrake, oerBrake); //うさプラ・小田急PIからの出力Bを使用
 			outputNotch = min(tmNotch, oerNotch); //うさプラ・小田急PIからの出力Pを使用
@@ -470,7 +470,7 @@ public:
 		}
 
 		//表示灯制御
-		flag = p92 == 7 && (p72 == 0) ? 1 : 0;//マスコンキー小田急、かつATSのときにATS表示灯点灯フラグを立てる
+		flag = p160 == 7 && (p72 == 0) && panel[81] == 0 ? 1 : 0;//マスコンキー小田急、かつATSのときにATS表示灯点灯フラグを立てる
 		if (flag == 0) { power = 0; }
 		p94 = power == 1 && p94 != 0 ? 1 : 0;//速度注意
 		p95 = power == 1 && p95 != 0 ? 1 : 0;//動作
@@ -814,9 +814,18 @@ public:
 
 	void ElapseD(ATS_VEHICLESTATE vehicleState, int* panel, int* sound)
 	{
-		if (e_tascon >= 0 && sk_tascon >= 0 && p92 == 7) { panel[e_tascon] = panel[sk_tascon]; panel[sk_tascon] = 0; }//TASC電源
-		if (e_tascmonitor >= 0 && sk_tascmonitor >= 0 && p92 == 7) { panel[e_tascmonitor] = panel[sk_tascmonitor]; panel[sk_tascmonitor] = 0; }//TASC制御
-		if (e_tascbrake >= 0 && sk_tascbrake >= 0 && p92 == 7) { panel[e_tascbrake] = panel[sk_tascbrake]; panel[sk_tascbrake] = 0; }//TASCブレーキ
+		if (p92 == 7)
+		{
+			if (e_tascon >= 0 && sk_tascon >= 0) { panel[e_tascon] = panel[sk_tascon]; panel[sk_tascon] = 0; }//TASC電源
+			if (e_tascmonitor >= 0 && sk_tascmonitor >= 0) { panel[e_tascmonitor] = panel[sk_tascmonitor]; panel[sk_tascmonitor] = 0; }//TASC制御
+			if (e_tascbrake >= 0 && sk_tascbrake >= 0) { panel[e_tascbrake] = panel[sk_tascbrake]; panel[sk_tascbrake] = 0; }//TASCブレーキ
+		}
+		else
+		{
+			if (e_tascon >= 0 && sk_tascon >= 0) { panel[e_tascon] = 0; }//TASC電源
+			if (e_tascmonitor >= 0 && sk_tascmonitor >= 0) { panel[e_tascmonitor] = 0; }//TASC制御
+			if (e_tascbrake >= 0 && sk_tascbrake >= 0) { panel[e_tascbrake] = 0; }//TASCブレーキ
+		}
 	}
 
 	//速度計

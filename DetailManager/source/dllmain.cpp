@@ -749,6 +749,21 @@ void WINAPI atsSetBeaconData(ATS_BEACONDATA beacon_data)
                     beaconTM.Type = 41;
                     beaconTM.Optional = 1;
                 }
+                else if (beacon_data.Type == 100 && beacon_data.Optional % 10 == 1)//現在OMかつD切換
+                {
+                    ATS_BEACONDATA OM_End{};
+                    OM_End.Type = 5;
+                    OM_End.Distance = 2;
+                    OM_End.Signal = 4;
+                    OM_End.Optional = 0;
+                    atsSetBeaconData(OM_End);//うさプラにOM初期化を送信
+                    ATS_BEACONDATA OM_End2{};
+                    OM_End2.Type = 9;
+                    OM_End2.Distance = 0;
+                    OM_End2.Signal = 0;
+                    OM_End2.Optional = 105;
+                    atsSetBeaconData(OM_End2);//うさプラにOM初期化を送信
+                }
                 else
                 {
                     beaconTM = beacon_data;
